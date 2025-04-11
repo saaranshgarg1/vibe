@@ -4,8 +4,8 @@
   <ShortName>ViBe</ShortName>
   <Description>Search ViBe</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://continuousactivelearning.github.io/vibe/img/favicon.ico</Image>
-  <Url type="text/html" method="get" template="https://continuousactivelearning.github.io/vibe/search?q={searchTerms}"/>
-  <Url type="application/opensearchdescription+xml" rel="self" template="https://continuousactivelearning.github.io/vibe/opensearch.xml" />
-  <moz:SearchForm>https://continuousactivelearning.github.io/vibe/</moz:SearchForm>
+  <Image width="16" height="16" type="image/x-icon">https://saaranshgarg1.github.io/vibe/img/favicon.ico</Image>
+  <Url type="text/html" method="get" template="https://saaranshgarg1.github.io/vibe/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://saaranshgarg1.github.io/vibe/opensearch.xml" />
+  <moz:SearchForm>https://saaranshgarg1.github.io/vibe/</moz:SearchForm>
 </OpenSearchDescription>

@@ -1,6 +1,9 @@
 name: Docusaurus Pre-checks
 
 on:
+  push:
+    paths:
+      - 'docs/**'
   pull_request:
     paths:
       - 'docs/**'

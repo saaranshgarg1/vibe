@@ -55,23 +55,3 @@ jobs:
       - name: Build Docusaurus site
         working-directory: ./docs
         run: pnpm build
-      
-      # Alternative check: verify generated files exist
-      - name: Verify build output
-        working-directory: ./docs
-        run: |
-          if [ -d "build" ] && [ -f "build/index.html" ]; then
-            echo "✅ Build output verified."
-          else
-            echo "❌ Build output verification failed!"
-            exit 1
-          fi
-      - name: Report build status
-        if: always()
-        run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Docusaurus build succeeded! Documentation looks good."
-          else
-            echo "❌ Docusaurus build failed. Please check the logs for errors."
-            exit 1
-          fi

@@ -12,7 +12,7 @@ import {
   ReadError,
   UpdateError,
 } from 'shared/errors/errors';
-import {ICourse} from 'shared/interfaces/IUser';
+import {ICourse, IEnrollment, IProgress} from 'shared/interfaces/IUser';
 import {Service, Inject} from 'typedi';
 import {MongoDatabase} from '../MongoDatabase';
 
@@ -21,6 +21,8 @@ export class CourseRepository implements ICourseRepository {
   private courseCollection: Collection<Course>;
   private courseVersionCollection: Collection<CourseVersion>;
   private itemsGroupCollection: Collection<ItemsGroup>;
+  private enrollmentCollection: Collection<IEnrollment>;
+  private progressCollection: Collection<IProgress>;
 
   constructor(@Inject(() => MongoDatabase) private db: MongoDatabase) {}
 
@@ -30,6 +32,10 @@ export class CourseRepository implements ICourseRepository {
       await this.db.getCollection<CourseVersion>('newCourseVersion');
     this.itemsGroupCollection =
       await this.db.getCollection<ItemsGroup>('itemsGroup');
+    this.enrollmentCollection =
+      await this.db.getCollection<IEnrollment>('enrollment');
+    this.progressCollection =
+      await this.db.getCollection<IProgress>('progress');
   }
   async create(course: Course): Promise<Course | null> {
     await this.init();
@@ -250,6 +256,103 @@ export class CourseRepository implements ICourseRepository {
       }
     } catch (error) {
       throw new UpdateError('Failed to update items.\n More Details: ' + error);
+    }
+  }
+
+  async createEnrollment(enrollment: IEnrollment): Promise<IEnrollment> {
+    await this.init();
+    try {
+      const result = await this.enrollmentCollection.insertOne(enrollment);
+      if (result.acknowledged) {
+        const newEnrollment = await this.enrollmentCollection.findOne({
+          _id: result.insertedId,
+        });
+        return newEnrollment;
+      } else {
+        throw new CreateError('Failed to create enrollment');
+      }
+    } catch (error) {
+      throw new CreateError(
+        'Failed to create enrollment.\n More Details: ' + error,
+      );
+    }
+  }
+
+  async createProgress(progress: IProgress): Promise<IProgress> {
+    await this.init();
+    try {
+      const result = await this.progressCollection.insertOne(progress);
+      if (result.acknowledged) {
+        const newProgress = await this.progressCollection.findOne({
+          _id: result.insertedId,
+        });
+        return newProgress;
+      } else {
+        throw new CreateError('Failed to create progress');
+      }
+    } catch (error) {
+      throw new CreateError(
+        'Failed to create progress.\n More Details: ' + error,
+      );
+    }
+  }
+
+  async getFirstOrderItems(courseVersionId: string): Promise<{
+    moduleId: ObjectId;
+    sectionId: ObjectId;
+    itemId: ObjectId;
+  }> {
+    await this.init();
+    try {
+      const version = await this.readVersion(courseVersionId);
+      if (!version || !version.modules || version.modules.length === 0) {
+        throw new ReadError('Course version has no modules');
+      }
+
+      // Sort modules by order and get first
+      const sortedModules = version.modules.sort((a, b) =>
+        a.order.localeCompare(b.order),
+      );
+      const firstModule = sortedModules[0];
+
+      if (!firstModule.sections || firstModule.sections.length === 0) {
+        throw new ReadError('Module has no sections');
+      }
+
+      // Sort sections by order and get first
+      const sortedSections = firstModule.sections.sort((a, b) =>
+        a.order.localeCompare(b.order),
+      );
+      const firstSection = sortedSections[0];
+
+      if (!firstSection.itemsGroupId) {
+        throw new ReadError('Section has no items group');
+      }
+
+      // Get items for first section
+      const itemsGroup = await this.readItemsGroup(
+        firstSection.itemsGroupId.toString(),
+      );
+
+      if (!itemsGroup || !itemsGroup.items || itemsGroup.items.length === 0) {
+        throw new ReadError('Items group has no items');
+      }
+
+      // Sort items by order and get first
+      const sortedItems = itemsGroup.items.sort((a, b) =>
+        a.order.localeCompare(b.order),
+      );
+      const firstItem = sortedItems[0];
+
+      return {
+        moduleId: new ObjectId(firstModule.moduleId),
+        sectionId: new ObjectId(firstSection.sectionId),
+        itemId: new ObjectId(firstItem.itemId),
+      };
+    } catch (error) {
+      throw new ReadError(
+        'Failed to get first order items.\n More Details: ' + error,
+      );
     }
   }
 }

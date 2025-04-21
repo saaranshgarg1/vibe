@@ -10,6 +10,7 @@ import {CourseVersionController} from './controllers/CourseVersionController';
 import {ModuleController} from './controllers/ModuleController';
 import {SectionController} from './controllers/SectionController';
 import {ItemController} from './controllers/ItemController';
+import {EnrollmentController} from './controllers/EnrollmentController';
 
 useContainer(Container);
 
@@ -29,6 +30,7 @@ export const coursesModuleOptions: RoutingControllersOptions = {
     ModuleController,
     SectionController,
     ItemController,
+    EnrollmentController,
   ],
   // defaultErrorHandler: false,
   // middlewares: [HttpErrorHandler],
@@ -41,3 +43,4 @@ export const coursesModuleOptions: RoutingControllersOptions = {
 export * from './classes/validators/index';
 export * from './classes/transformers/index';
 export * from './controllers/index';
+export {EnrollmentController};

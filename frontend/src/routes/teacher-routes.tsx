@@ -8,7 +8,7 @@ import SampleQuiz from "@/pages/course-templates/sample-quiz";
 
 const teacherRoutes: RouteObject = {
   path: "/teacher",
-  element: <TeacherLayout />,
+  element: <SampleQuiz />,
   children: [
     {
       path: "dashboard",

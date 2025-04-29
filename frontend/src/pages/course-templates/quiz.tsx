@@ -1,213 +1,333 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import Question from './questions';
 
-// Define question types
-type QuestionType = 'MCQ' | 'MSQ' | 'TEXT';
-
-// Interface for question options
-interface QuestionOption {
-  id: string;
-  text: string;
+// Types based on the MongoDB schema
+interface QuizType {
+  _id: string;
+  questionVisibility: number; // Controls how questions are displayed
+  questions: string[]; // Array of question IDs
 }
 
-// Interface for quiz items
-interface QuizItem {
-  id: string;
-  title: string;
-  marks: number;
-  type: QuestionType;
-  options?: QuestionOption[];
-  correctAnswer?: string | string[];
+// MongoDB Schema interfaces
+interface QuestionLotItem {
+  _itemId: string;
+  type: string;
+  textValue: string;
+  imgURL?: string;
+  audioURL?: string;
 }
 
-// Props for Quiz component
+interface QuestionLot {
+  _lotId: string;
+  items: QuestionLotItem[];
+}
+
+interface NumericalSolution {
+  lowerLimit: number;
+  upperLimit: number;
+  decimalPrecision: number;
+  trueValue: number;
+}
+
+interface OrderSolution {
+  orderValue: number;
+  lotItemId: string;
+}
+
+interface MatchSolution {
+  lotItemIds: string[];
+}
+
+interface QuestionSolution {
+  lotId?: string;
+  lotItemId?: string;
+  lotItemIds?: string[];
+  orders?: OrderSolution[];
+  matches?: MatchSolution[];
+  numerical?: NumericalSolution;
+  descriptiveSolution?: string;
+}
+
+interface QuestionMeta {
+  creator: string;
+  studentGenerated: boolean;
+  aiGenerated: boolean;
+}
+
+interface QuestionType {
+  _id: string;
+  questionType: 'MCQ' | 'MSQ' | 'TEXT' | 'NUMERICAL' | 'MATCH' | 'ORDERING';
+  questionText: string;
+  hintText: string;
+  difficulty: 1 | 2 | 3;
+  lots: QuestionLot[];
+  solution: QuestionSolution;
+  meta: QuestionMeta;
+  timeLimit: number;
+  points: number;
+}
+
+// Props type for Quiz component
 interface QuizProps {
-  time: number; // Time in minutes
-  items: QuizItem[];
-  onComplete?: (answers: Record<string, any>) => void;
-  onTimeUp?: () => void;
+  quizId: string;
+  questionVisibility?: number; // Now directly accepting questionVisibility
+  questions?: QuestionType[]; // Now directly accepting questions
+  onBack?: () => void;
+  onComplete?: (score: number, answers: Record<string, any>[]) => void;
 }
 
-export default function Quiz({ time, items, onComplete, onTimeUp }: QuizProps) {
-  const [open, setOpen] = useState(true);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [timeLeft, setTimeLeft] = useState(time * 60); // Convert minutes to seconds
-  
-  // Timer
+const Quiz: React.FC<QuizProps> = ({ 
+  quizId, 
+  questionVisibility: propsQuestionVisibility, 
+  questions: propsQuestions,
+  onBack = () => {}, 
+  onComplete 
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questions, setQuestions] = useState<QuestionType[]>([]);
+  const [answers, setAnswers] = useState<Record<string, any>[]>([]);
+  const [quizComplete, setQuizComplete] = useState(false);
+  const [score, setScore] = useState(0);
+  const [quizData, setQuizData] = useState<QuizType | null>(null);
+  const [renderKey, setRenderKey] = useState(0); // Add a key to force re-render questions
+
+  // Load quiz data
   useEffect(() => {
-    if (!open || timeLeft <= 0) return;
-    
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          onTimeUp?.();
-          return 0;
-        }
-        return prev - 1;
+    // If questions are passed directly, use them
+    if (propsQuestions && propsQuestions.length > 0) {
+      setQuestions(propsQuestions);
+      setAnswers(new Array(propsQuestions.length).fill({}));
+      setQuizData({
+        _id: quizId,
+        questionVisibility: propsQuestionVisibility || 1,
+        questions: propsQuestions.map(q => q._id)
       });
-    }, 1000);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise, try to fetch from API
+    const fetchQuizFromAPI = async () => {
+      setLoading(true);
+      try {
+        const quizResponse = await fetch(`/api/quizzes/${quizId}`);
+        
+        if (!quizResponse.ok) {
+          throw new Error(`Failed to fetch quiz: ${quizResponse.status}`);
+        }
+        
+        const quiz = await quizResponse.json();
+        
+        // Fetch all questions
+        const questionPromises = quiz.questions.map(async (qId: string) => {
+          const response = await fetch(`/api/questions/${qId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch question ${qId}`);
+          }
+          return response.json();
+        });
+        
+        const questionList = await Promise.all(questionPromises);
+        
+        setQuizData(quiz);
+        setQuestions(questionList);
+        setAnswers(new Array(questionList.length).fill({}));
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading quiz:', err);
+        setError(`Failed to load quiz: ${err instanceof Error ? err.message : String(err)}`);
+        setLoading(false);
+      }
+    };
+
+    fetchQuizFromAPI();
+  }, [quizId, propsQuestions, propsQuestionVisibility]);
+
+  // Handle answer submission from Question component
+  const handleQuestionComplete = (answer: Record<string, any>) => {
+    const newAnswers = [...answers];
+    newAnswers[currentQuestionIndex] = answer;
+    setAnswers(newAnswers);
+
+    // Get the current visibility setting
+    const visibility = quizData?.questionVisibility || propsQuestionVisibility || 1;
+
+    // If question visibility is 1, automatically move to next question
+    if (visibility === 1 && currentQuestionIndex < questions.length - 1) {
+      // Move to next question after submission
+      handleNext();
+    }
+    // If this is the last question or all questions are answered, complete the quiz
+    else if (
+      currentQuestionIndex === questions.length - 1 ||
+      (newAnswers.every(a => Object.keys(a).length > 0) && visibility !== 1)
+    ) {
+      handleQuizComplete(newAnswers);
+    }
+  };
+
+  // Handle time up for a question
+  const handleTimeUp = () => {
+    const visibility = quizData?.questionVisibility || propsQuestionVisibility || 1;
     
-    return () => clearInterval(timer);
-  }, [open, timeLeft, onTimeUp]);
-  
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' + secs : secs}`;
-  };
-  
-  const handleAnswer = (questionId: string, answer: any) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: answer,
-    }));
-  };
-  
-  const handleNext = () => {
-    if (currentQuestion < items.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      handleSubmit();
+    // If showing one question at a time, move to next
+    if (visibility === 1 && currentQuestionIndex < questions.length - 1) {
+      handleNext();
     }
   };
-  
+
+  // Handle manual navigation
   const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
+    if (currentQuestionIndex > 0) {
+      setRenderKey(prev => prev + 1);
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
-  
-  const handleSubmit = () => {
-    onComplete?.(answers);
-    setOpen(false);
+
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setRenderKey(prev => prev + 1);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
   };
-  
-  // Render different question types
-  const renderQuestion = (question: QuizItem) => {
-    switch (question.type) {
+
+  // Complete the quiz
+  const handleQuizComplete = (finalAnswers = answers) => {
+    // Calculate score based on correct answers
+    let correctCount = 0;
+    
+    questions.forEach((q, index) => {
+      const answer = finalAnswers[index];
+      if (isAnswerCorrect(q, answer)) {
+        correctCount++;
+      }
+    });
+    
+    const finalScore = Math.round((correctCount / questions.length) * 100);
+    setScore(finalScore);
+    setQuizComplete(true);
+    
+    // Call the onComplete callback if provided
+    if (onComplete) {
+      onComplete(finalScore, finalAnswers);
+    }
+  };
+
+  // Check if an answer is correct
+  const isAnswerCorrect = (question: QuestionType, answer: Record<string, any>): boolean => {
+    if (!answer || Object.keys(answer).length === 0) return false;
+    
+    switch (question.questionType) {
       case 'MCQ':
+        return answer[question._id] === question.solution.lotItemId;
+        
+      case 'MSQ': {
+        const userSelections = answer[question._id] || [];
+        const correctSelections = question.solution.lotItemIds || [];
         return (
-          <RadioGroup
-            value={answers[question.id] || ''}
-            onValueChange={(value) => handleAnswer(question.id, value)}
-          >
-            {question.options?.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2 mb-3 p-2 rounded-md hover:bg-slate-50">
-                <RadioGroupItem value={option.id} id={option.id} />
-                <Label htmlFor={option.id} className="w-full cursor-pointer">{option.text}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+          userSelections.length === correctSelections.length &&
+          userSelections.every(id => correctSelections.includes(id))
         );
-      case 'MSQ':
-        return (
-          <div className="space-y-2">
-            {question.options?.map((option) => {
-              const checked = (answers[question.id] || []).includes(option.id);
-              return (
-                <div key={option.id} className="flex items-center space-x-2 mb-2 p-2 rounded-md hover:bg-slate-50">
-                  <Checkbox 
-                    id={option.id}
-                    checked={checked}
-                    onCheckedChange={(checked) => {
-                      const currentAnswers = answers[question.id] || [];
-                      let newAnswers;
-                      if (checked) {
-                        newAnswers = [...currentAnswers, option.id];
-                      } else {
-                        newAnswers = currentAnswers.filter((id: string) => id !== option.id);
-                      }
-                      handleAnswer(question.id, newAnswers);
-                    }}
-                  />
-                  <Label htmlFor={option.id} className="w-full cursor-pointer">{option.text}</Label>
-                </div>
-              );
-            })}
-          </div>
-        );
+      }
+        
       case 'TEXT':
-        return (
-          <Input
-            type="text"
-            value={answers[question.id] || ''}
-            onChange={(e) => handleAnswer(question.id, e.target.value)}
-            placeholder="Type your answer here"
-            className="w-full"
-          />
+        return answer[question._id]?.toLowerCase().trim() === 
+               question.solution.descriptiveSolution?.toLowerCase().trim();
+        
+      case 'NUMERICAL': {
+        const userValue = parseFloat(answer[question._id]);
+        const solution = question.solution.numerical;
+        if (!solution) return false;
+        return userValue >= solution.lowerLimit && userValue <= solution.upperLimit;
+      }
+        
+      case 'MATCH': {
+        const userMatches = answer[question._id] || {};
+        const matches = question.solution.matches || [];
+        
+        for (const match of matches) {
+          const [itemA, itemB] = match.lotItemIds;
+          if (userMatches[itemA] !== itemB) return false;
+        }
+        return true;
+      }
+        
+      case 'ORDERING': {
+        const userOrder = answer[question._id] || [];
+        const correctOrder = question.solution.orders || [];
+        
+        return userOrder.every((item, idx) => 
+          item.id === correctOrder.find(o => o.orderValue === idx + 1)?.lotItemId
         );
+      }
+        
       default:
-        return <div>Unsupported question type</div>;
+        return false;
     }
   };
-  
-  const currentQuestionItem = items[currentQuestion];
-  const progress = ((currentQuestion + 1) / items.length) * 100;
-  const isTimeRunningLow = timeLeft < 60; // Less than a minute
-  
+
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <div className="p-6 max-w-lg mx-auto mt-8 bg-red-50 rounded-lg border border-red-200">
+        <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Quiz</h3>
+        <p className="text-red-700">{error}</p>
+        <button 
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          onClick={onBack}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // Get the current visibility setting
+  const visibility = quizData?.questionVisibility || propsQuestionVisibility || 1;
+
+  // Render current question with updated props - removed navigation buttons
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Quiz</DialogTitle>
-          <DialogDescription>
-            <div className="flex justify-between items-center">
-              <span>Complete all questions before the time runs out</span>
-              <span className={`text-lg font-medium ${isTimeRunningLow ? 'text-red-500 flex items-center gap-1' : ''}`}>
-                {isTimeRunningLow && <AlertCircle size={16} className="animate-pulse" />}
-                {formatTime(timeLeft)}
-              </span>
-            </div>
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="mb-4">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between mt-1 text-sm text-muted-foreground">
-            <span>Question {currentQuestion + 1} of {items.length}</span>
-            <span>{currentQuestionItem.marks} marks</span>
-          </div>
+    <div className="max-w-4xl mx-auto">
+      {/* Current Question - using key to force rerender */}
+      {!loading && questions[currentQuestionIndex] && (
+        <div key={`question-${currentQuestionIndex}-${renderKey}`}>
+          <Question
+            question={questions[currentQuestionIndex]}
+            questionIndex={currentQuestionIndex}
+            totalQuestions={questions.length}
+            isActive={true}
+            onComplete={handleQuestionComplete}
+            onTimeUp={handleTimeUp}
+            // Navigation is now handled internally
+          />
         </div>
-        
-        <Card className="border shadow-sm">
-          <CardContent className="pt-6">
-            <div className="mb-1 text-sm text-muted-foreground">
-              {currentQuestionItem.type === 'MCQ' && 'Select one option'}
-              {currentQuestionItem.type === 'MSQ' && 'Select all that apply'}
-              {currentQuestionItem.type === 'TEXT' && 'Type your answer'}
-            </div>
-            <h3 className="text-lg font-medium mb-4">{currentQuestionItem.title}</h3>
-            {renderQuestion(currentQuestionItem)}
-          </CardContent>
-        </Card>
-        
-        <div className="flex justify-between mt-4">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevious}
-            disabled={currentQuestion === 0}
+      )}
+      
+      {/* Submit button - only shown if questionVisibility is not 1 */}
+      {visibility !== 1 && (
+        <div className="mt-6 flex justify-center">
+          <button 
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+            onClick={() => handleQuizComplete()}
+            disabled={!answers.every(a => Object.keys(a).length > 0)}
           >
-            Previous
-          </Button>
-          
-          <Button 
-            onClick={handleNext}
-            variant={currentQuestion < items.length - 1 ? "default" : "default"}
-          >
-            {currentQuestion < items.length - 1 ? 'Next' : 'Submit'}
-          </Button>
+            Submit Quiz
+          </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
-}
+};
+
+export default Quiz;

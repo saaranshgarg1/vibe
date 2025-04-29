@@ -9,11 +9,12 @@ import {
   Get,
   Put,
   Params,
+  HttpCode,
+  NotFoundError,
 } from 'routing-controllers';
 import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
 import {Service, Inject} from 'typedi';
 import {Course} from '../classes/transformers/Course';
-import {ItemNotFoundError} from 'shared/errors/errors';
 import {
   CreateCourseBody,
   ReadCourseParams,
@@ -39,7 +40,7 @@ import {
 @Service()
 export class CourseController {
   constructor(
-    @Inject('NewCourseRepo') private readonly courseRepo: CourseRepository,
+    @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {}
 
   /**
@@ -50,12 +51,13 @@ export class CourseController {
    * @throws HttpError - If the course creation fails.
    */
   @Authorized(['admin', 'instructor'])
-  @Post('/')
-  async create(@Body() body: CreateCourseBody) {
+  @Post('/', {transformResponse: true})
+  @HttpCode(201)
+  async create(@Body() body: CreateCourseBody): Promise<Course> {
     let course = new Course(body);
     try {
       course = await this.courseRepo.create(course);
-      return instanceToPlain(course);
+      return course;
     } catch (error) {
       throw new HttpError(500, error.message);
     }
@@ -76,7 +78,7 @@ export class CourseController {
       const courses = await this.courseRepo.read(id);
       return instanceToPlain(courses);
     } catch (error) {
-      if (error instanceof ItemNotFoundError) {
+      if (error instanceof NotFoundError) {
         throw new HttpError(404, error.message);
       }
       throw new HttpError(500, error.message);
@@ -102,7 +104,7 @@ export class CourseController {
       const course = await this.courseRepo.update(id, body);
       return instanceToPlain(course);
     } catch (error) {
-      if (error instanceof ItemNotFoundError) {
+      if (error instanceof NotFoundError) {
         throw new HttpError(404, error.message);
       }
       throw new HttpError(500, error.message);

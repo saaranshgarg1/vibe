@@ -10,17 +10,35 @@ import {CourseVersionController} from './controllers/CourseVersionController';
 import {ModuleController} from './controllers/ModuleController';
 import {SectionController} from './controllers/SectionController';
 import {ItemController} from './controllers/ItemController';
+import {CourseService} from './services';
+import {HttpErrorHandler} from 'shared/middleware/errorHandler';
 
 useContainer(Container);
 
-if (!Container.has('Database')) {
-  Container.set<IDatabase>('Database', new MongoDatabase(dbConfig.url, 'vibe'));
+export function setupCoursesModuleDependencies() {
+  if (!Container.has('Database')) {
+    Container.set<IDatabase>(
+      'Database',
+      new MongoDatabase(dbConfig.url, 'vibe'),
+    );
+  }
+
+  if (!Container.has('CourseRepo')) {
+    Container.set(
+      'CourseRepo',
+      new CourseRepository(Container.get<MongoDatabase>('Database')),
+    );
+  }
+
+  if (!Container.has('CourseService')) {
+    Container.set(
+      'CourseService',
+      new CourseService(Container.get<CourseRepository>('CourseRepo')),
+    );
+  }
 }
 
-Container.set(
-  'NewCourseRepo',
-  new CourseRepository(Container.get<MongoDatabase>('Database')),
-);
+setupCoursesModuleDependencies();
 
 export const coursesModuleOptions: RoutingControllersOptions = {
   controllers: [
@@ -30,8 +48,9 @@ export const coursesModuleOptions: RoutingControllersOptions = {
     SectionController,
     ItemController,
   ],
-  // defaultErrorHandler: false,
-  // middlewares: [HttpErrorHandler],
+  // defaultErrorHandler: true,
+  middlewares: [HttpErrorHandler],
+  defaultErrorHandler: false,
   authorizationChecker: async function () {
     return true;
   },

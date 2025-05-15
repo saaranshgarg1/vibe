@@ -1,111 +1,178 @@
-import {instanceToPlain} from 'class-transformer';
 import 'reflect-metadata';
 import {
   JsonController,
   Authorized,
   Post,
   Body,
-  HttpError,
   Get,
   Put,
   Params,
+  HttpCode,
 } from 'routing-controllers';
-import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
 import {Service, Inject} from 'typedi';
 import {Course} from '../classes/transformers/Course';
-import {ItemNotFoundError} from 'shared/errors/errors';
 import {
   CreateCourseBody,
   ReadCourseParams,
   UpdateCourseParams,
   UpdateCourseBody,
+  CourseDataResponse,
+  CourseNotFoundErrorResponse,
 } from '../classes/validators/CourseValidators';
+import {CourseService} from '../services';
+import {getMetadataArgsStorage} from 'routing-controllers';
+import {
+  OpenAPI,
+  routingControllersToSpec,
+  ResponseSchema,
+} from 'routing-controllers-openapi';
+import {validationMetadatasToSchemas} from 'class-validator-jsonschema';
+import {coursesModuleOptions} from '..';
+import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
-/**
- * @category Courses/Controllers
- * @categoryDescription
-
- */
-
-/**
- * Controller for managing courses.
- * Handles API endpoints related to course creation, reading, and updating.
- * Uses dependency injection to work with CourseRepository and exposes
- * endpoints under the `/courses` route.
- *
- * @category Courses/Controllers
- */
+@OpenAPI({
+  tags: ['Courses'],
+})
 @JsonController('/courses')
 @Service()
 export class CourseController {
   constructor(
-    @Inject('NewCourseRepo') private readonly courseRepo: CourseRepository,
+    @Inject('CourseService') private readonly courseService: CourseService,
   ) {}
 
-  /**
-   * Create a new course.
-   * @param body - Validated payload for course creation.
-   * @returns The created course object.
-   *
-   * @throws HttpError - If the course creation fails.
-   */
   @Authorized(['admin', 'instructor'])
-  @Post('/')
-  async create(@Body() body: CreateCourseBody) {
-    let course = new Course(body);
-    try {
-      course = await this.courseRepo.create(course);
-      return instanceToPlain(course);
-    } catch (error) {
-      throw new HttpError(500, error.message);
-    }
+  @Post('/', {transformResponse: true})
+  @HttpCode(201)
+  @ResponseSchema(CourseDataResponse, {
+    description: 'Course created successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @OpenAPI({
+    summary: 'Create Course',
+    description: 'Creates a new course with the provided details.',
+  })
+  async create(@Body() body: CreateCourseBody): Promise<Course> {
+    const course = new Course(body);
+    const createdCourse = await this.courseService.createCourse(course);
+    return createdCourse;
   }
 
-  /**
-   * Retrieve a course by its ID.
-   * @param params - Contains the course Mongo ID.
-   * @returns The course data if found.
-   *
-   * @throws HttpError - If the course is not found or if an error occurs.
-   */
   @Authorized(['admin', 'instructor'])
-  @Get('/:id')
+  @Get('/:id', {transformResponse: true})
+  @ResponseSchema(CourseDataResponse, {
+    description: 'Course retrieved successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(CourseNotFoundErrorResponse, {
+    description: 'Course not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Get Course',
+    description: 'Retrieves the course details for the specified course ID.',
+  })
   async read(@Params() params: ReadCourseParams) {
     const {id} = params;
-    try {
-      const courses = await this.courseRepo.read(id);
-      return instanceToPlain(courses);
-    } catch (error) {
-      if (error instanceof ItemNotFoundError) {
-        throw new HttpError(404, error.message);
-      }
-      throw new HttpError(500, error.message);
-    }
+    const course = await this.courseService.readCourse(id);
+    return course;
   }
 
-  /**
-   * Update a course by ID.
-   * @param params - The course ID.
-   * @param body - The fields to update.
-   * @returns The updated course object.
-   *
-   * @throws HttpError - If the course is not found or if an error occurs.
-   */
   @Authorized(['admin', 'instructor'])
-  @Put('/:id')
+  @Put('/:id', {transformResponse: true})
+  @ResponseSchema(CourseDataResponse, {
+    description: 'Course updated successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(CourseNotFoundErrorResponse, {
+    description: 'Course not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Update Course',
+    description: 'Updates the course details for the specified course ID.',
+  })
   async update(
     @Params() params: UpdateCourseParams,
     @Body() body: UpdateCourseBody,
   ) {
     const {id} = params;
-    try {
-      const course = await this.courseRepo.update(id, body);
-      return instanceToPlain(course);
-    } catch (error) {
-      if (error instanceof ItemNotFoundError) {
-        throw new HttpError(404, error.message);
-      }
-      throw new HttpError(500, error.message);
-    }
+    const updatedCourse = await this.courseService.updateCourse(id, body);
+    return updatedCourse;
   }
 }
+
+const schemas = validationMetadatasToSchemas({
+  refPointerPrefix: '#/components/schemas/',
+  validationError: {
+    target: true,
+    value: true,
+  },
+});
+
+const storage = getMetadataArgsStorage();
+console.log(storage.params);
+const spec = routingControllersToSpec(storage, coursesModuleOptions, {
+  tags: [
+    {
+      name: 'Courses',
+      description:
+        'Operations related to courses, which include creating, reading, and updating course information.',
+    },
+  ],
+  info: {
+    title: 'ViBe Course API',
+    version: '1.0.0',
+    description: 'API for managing courses',
+  },
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
+  components: {
+    schemas,
+  },
+  servers: [
+    {
+      url: 'http://{host}:{port}{basePath}',
+      description: 'Local server',
+      variables: {
+        host: {
+          default: 'localhost',
+          description: 'Host name for the server',
+        },
+        port: {
+          default: '3000',
+          description: 'Port number for the server',
+        },
+        basePath: {
+          default: 'api',
+        },
+      },
+    },
+    {
+      url: 'https://{url}{basePath}',
+      description: 'Production server',
+      variables: {
+        host: {
+          default: 'api.example.com',
+          description: 'Host name for the production server',
+        },
+        basePath: {
+          default: '',
+          description: 'Base path for the production API',
+        },
+      },
+    },
+  ],
+});
+console.log(JSON.stringify(spec, null, 2));

@@ -1,41 +1,33 @@
-export class CreateError extends Error {
+import {HttpError} from 'routing-controllers';
+
+// 400 - Bad Request
+export class CreateError extends HttpError {
   constructor(message: string) {
-    super(message);
+    super(400, message);
     this.name = 'CreateError';
   }
 }
 
-export class ReadError extends Error {
+// 400 - Bad Request
+export class ReadError extends HttpError {
   constructor(message: string) {
-    super(message);
+    super(400, message);
     this.name = 'ReadError';
   }
 }
 
-export class UpdateError extends Error {
+// 400 - Bad Request
+export class UpdateError extends HttpError {
   constructor(message: string) {
-    super(message);
+    super(400, message);
     this.name = 'UpdateError';
   }
 }
 
-export class DeleteError extends Error {
+// 400 - Bad Request
+export class DeleteError extends HttpError {
   constructor(message: string) {
-    super(message);
+    super(400, message);
     this.name = 'DeleteError';
-  }
-}
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-export class ItemNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
   }
 }

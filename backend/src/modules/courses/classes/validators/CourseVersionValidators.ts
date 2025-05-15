@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import {IsEmpty, IsNotEmpty, IsString, IsMongoId} from 'class-validator';
-import {ICourseVersion} from 'shared/interfaces/IUser';
+import {ICourseVersion} from 'shared/interfaces/Models';
 
 /**
  * DTO for creating a new course version.
@@ -13,7 +13,7 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
    * This is auto-populated and should remain empty in the request body.
    */
   @IsEmpty()
-  courseId: string;
+  courseId?: string;
 
   /**
    * The version label or identifier (e.g., "v1.0", "Fall 2025").

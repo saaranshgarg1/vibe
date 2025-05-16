@@ -22,8 +22,12 @@ import {
   MoveSectionParams,
   UpdateSectionBody,
   UpdateSectionParams,
+  SectionVersionResponse,
+  SectionNotFoundErrorResponse,
 } from '../classes/validators/SectionValidators';
 import {calculateNewOrder} from '../utils/calculateNewOrder';
+import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
+import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
 /**
  * Controller for managing sections within course modules.
@@ -36,6 +40,9 @@ import {calculateNewOrder} from '../utils/calculateNewOrder';
  * and adjusting section order within a module.
  */
 
+@OpenAPI({
+  tags: ['Course Sections'],
+})
 @JsonController('/courses')
 @Service()
 export class SectionController {
@@ -63,6 +70,22 @@ export class SectionController {
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules/:moduleId/sections')
   @HttpCode(201)
+  @ResponseSchema(SectionVersionResponse, {
+    description: 'Section created successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(SectionNotFoundErrorResponse, {
+    description: 'Section not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Create Section',
+    description:
+      'Creates a new section in the specified module and automatically generates an associated items group.',
+  })
   async create(
     @Params() params: CreateSectionParams,
     @Body() body: CreateSectionBody,
@@ -124,6 +147,22 @@ export class SectionController {
 
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId/sections/:sectionId')
+  @ResponseSchema(SectionVersionResponse, {
+    description: 'Section updated successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(SectionNotFoundErrorResponse, {
+    description: 'Section not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Update Section',
+    description:
+      "Updates an existing section's name or description within a module.",
+  })
   async update(
     @Params() params: UpdateSectionParams,
     @Body() body: UpdateSectionBody,
@@ -186,6 +225,22 @@ export class SectionController {
 
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId/sections/:sectionId/move')
+  @ResponseSchema(SectionVersionResponse, {
+    description: 'Section moved successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(SectionNotFoundErrorResponse, {
+    description: 'Section not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Move Section',
+    description:
+      'Reorders a section within its module by placing it before or after another section.',
+  })
   async move(
     @Params() params: MoveSectionParams,
     @Body() body: MoveSectionBody,

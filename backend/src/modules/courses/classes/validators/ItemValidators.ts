@@ -23,15 +23,7 @@ import {
 } from 'shared/interfaces/Models';
 import {JSONSchema} from 'class-validator-jsonschema';
 
-/**
- * Video item details for embedded video learning content.
- *
- * @category Courses/Validators/ItemValidators
- */
 class VideoDetailsPayloadValidator implements IVideoDetails {
-  /**
-   * Public video URL (e.g., YouTube or Vimeo link).
-   */
   @JSONSchema({
     title: 'Video URL',
     description: 'Public video URL (e.g., YouTube or Vimeo link)',
@@ -44,9 +36,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   @IsUrl()
   URL: string;
 
-  /**
-   * Start time of the clip in HH:MM:SS format.
-   */
   @JSONSchema({
     title: 'Start Time',
     description: 'Start time of the video clip in HH:MM:SS format',
@@ -60,9 +49,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   })
   startTime: string;
 
-  /**
-   * End time of the clip in HH:MM:SS format.
-   */
   @JSONSchema({
     title: 'End Time',
     description: 'End time of the video clip in HH:MM:SS format',
@@ -76,9 +62,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   })
   endTime: string;
 
-  /**
-   * Points assigned to the video interaction.
-   */
   @JSONSchema({
     title: 'Video Points',
     description: 'Points assigned to the video interaction',
@@ -90,15 +73,7 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   points: number;
 }
 
-/**
- * Quiz item details for scheduled quiz-based evaluation.
- *
- * @category Courses/Validators/ItemValidators
- */
 class QuizDetailsPayloadValidator implements IQuizDetails {
-  /**
-   * Number of quiz questions visible to students.
-   */
   @JSONSchema({
     title: 'Question Visibility',
     description: 'Number of quiz questions visible to students at once',
@@ -110,9 +85,6 @@ class QuizDetailsPayloadValidator implements IQuizDetails {
   @IsPositive()
   questionVisibility: number;
 
-  /**
-   * ISO date string representing quiz release time.
-   */
   @JSONSchema({
     title: 'Quiz Release Time',
     description: 'ISO date string representing quiz release time',
@@ -124,9 +96,6 @@ class QuizDetailsPayloadValidator implements IQuizDetails {
   @IsDateString()
   releaseTime: Date;
 
-  /**
-   * List of quiz question IDs (auto-managed).
-   */
   @JSONSchema({
     title: 'Quiz Questions',
     description: 'List of quiz question IDs (auto-managed)',
@@ -141,9 +110,6 @@ class QuizDetailsPayloadValidator implements IQuizDetails {
   @IsEmpty()
   questions: string[];
 
-  /**
-   * ISO date string for quiz deadline.
-   */
   @JSONSchema({
     title: 'Quiz Deadline',
     description: 'ISO date string for quiz deadline',
@@ -156,15 +122,7 @@ class QuizDetailsPayloadValidator implements IQuizDetails {
   deadline: Date;
 }
 
-/**
- * Blog item details for content-based reading or writing activities.
- *
- * @category Courses/Validators/ItemValidators
- */
 class BlogDetailsPayloadValidator implements IBlogDetails {
-  /**
-   * Tags for categorizing the blog (auto-managed).
-   */
   @JSONSchema({
     title: 'Blog Tags',
     description: 'Tags for categorizing the blog (auto-managed)',
@@ -178,9 +136,6 @@ class BlogDetailsPayloadValidator implements IBlogDetails {
   @IsEmpty()
   tags: string[];
 
-  /**
-   * Full blog content in markdown or plain text.
-   */
   @JSONSchema({
     title: 'Blog Content',
     description: 'Full blog content in markdown or plain text',
@@ -192,9 +147,6 @@ class BlogDetailsPayloadValidator implements IBlogDetails {
   @IsString()
   content: string;
 
-  /**
-   * Points assigned to the blog submission.
-   */
   @JSONSchema({
     title: 'Blog Points',
     description: 'Points assigned to the blog submission',
@@ -205,9 +157,6 @@ class BlogDetailsPayloadValidator implements IBlogDetails {
   @IsDecimal()
   points: number;
 
-  /**
-   * Estimated time to complete the blog in minutes.
-   */
   @JSONSchema({
     title: 'Estimated Read Time',
     description: 'Estimated time to complete reading the blog in minutes',
@@ -220,15 +169,7 @@ class BlogDetailsPayloadValidator implements IBlogDetails {
   estimatedReadTimeInMinutes: number;
 }
 
-/**
- * Body for creating an item inside a section.
- *
- * @category Courses/Validators/ItemValidators
- */
 class CreateItemBody implements IBaseItem {
-  /**
-   * MongoDB ID (auto-assigned).
-   */
   @JSONSchema({
     title: 'Item ID',
     description: 'MongoDB ID (auto-assigned)',
@@ -240,9 +181,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   _id?: string;
 
-  /**
-   * Title of the item (required).
-   */
   @JSONSchema({
     title: 'Item Name',
     description: 'Title of the item',
@@ -253,9 +191,6 @@ class CreateItemBody implements IBaseItem {
   @IsString()
   name: string;
 
-  /**
-   * Description of the item (required).
-   */
   @JSONSchema({
     title: 'Item Description',
     description: 'Description of the item',
@@ -267,9 +202,6 @@ class CreateItemBody implements IBaseItem {
   @IsString()
   description: string;
 
-  /**
-   * Section ID to which the item belongs (auto-managed).
-   */
   @JSONSchema({
     title: 'Section ID',
     description: 'Section ID to which the item belongs (auto-managed)',
@@ -281,9 +213,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   sectionId: string;
 
-  /**
-   * Order key for item placement (auto-managed).
-   */
   @JSONSchema({
     title: 'Item Order',
     description: 'Order key for item placement (auto-managed)',
@@ -294,9 +223,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   order: string;
 
-  /**
-   * Item details (depends on type) – video, blog, or quiz.
-   */
   @JSONSchema({
     title: 'Item Details',
     description: 'Item details (depends on type) – video, blog, or quiz',
@@ -306,9 +232,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   itemDetails: IVideoDetails | IQuizDetails | IBlogDetails;
 
-  /**
-   * Place item after this item ID (optional).
-   */
   @JSONSchema({
     title: 'After Item ID',
     description: 'Place item after this item ID',
@@ -321,9 +244,6 @@ class CreateItemBody implements IBaseItem {
   @IsString()
   afterItemId?: string;
 
-  /**
-   * Place item before this item ID (optional).
-   */
   @JSONSchema({
     title: 'Before Item ID',
     description: 'Place item before this item ID',
@@ -336,9 +256,6 @@ class CreateItemBody implements IBaseItem {
   @IsString()
   beforeItemId?: string;
 
-  /**
-   * Item creation timestamp (auto-managed).
-   */
   @JSONSchema({
     title: 'Created At',
     description: 'Item creation timestamp (auto-managed)',
@@ -350,9 +267,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   createdAt: Date;
 
-  /**
-   * Item update timestamp (auto-managed).
-   */
   @JSONSchema({
     title: 'Updated At',
     description: 'Item update timestamp (auto-managed)',
@@ -364,9 +278,6 @@ class CreateItemBody implements IBaseItem {
   @IsEmpty()
   updatedAt: Date;
 
-  /**
-   * Type of the item: VIDEO, BLOG, or QUIZ.
-   */
   @JSONSchema({
     title: 'Item Type',
     description: 'Type of the item: VIDEO, BLOG, or QUIZ',
@@ -378,9 +289,6 @@ class CreateItemBody implements IBaseItem {
   @IsEnum(ItemType)
   type: ItemType;
 
-  /**
-   * Nested video details (required if type is VIDEO).
-   */
   @JSONSchema({
     title: 'Video Details',
     description: 'Details specific to video items',
@@ -392,9 +300,6 @@ class CreateItemBody implements IBaseItem {
   @Type(() => VideoDetailsPayloadValidator)
   videoDetails?: VideoDetailsPayloadValidator;
 
-  /**
-   * Nested blog details (required if type is BLOG).
-   */
   @JSONSchema({
     title: 'Blog Details',
     description: 'Details specific to blog items',
@@ -406,9 +311,6 @@ class CreateItemBody implements IBaseItem {
   @Type(() => BlogDetailsPayloadValidator)
   blogDetails?: BlogDetailsPayloadValidator;
 
-  /**
-   * Nested quiz details (required if type is QUIZ).
-   */
   @JSONSchema({
     title: 'Quiz Details',
     description: 'Details specific to quiz items',
@@ -421,16 +323,7 @@ class CreateItemBody implements IBaseItem {
   quizDetails?: QuizDetailsPayloadValidator;
 }
 
-/**
- * Body for updating an item.
- * Allows partial updates to name, description, and details.
- *
- * @category Courses/Validators/ItemValidators
- */
 class UpdateItemBody implements IBaseItem {
-  /**
-   * MongoDB ID of the item (auto-managed).
-   */
   @JSONSchema({
     title: 'Item ID',
     description: 'MongoDB ID (auto-assigned)',
@@ -442,9 +335,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   _id?: string;
 
-  /**
-   * Updated name (optional).
-   */
   @JSONSchema({
     title: 'Item Name',
     description: 'Updated title of the item',
@@ -455,9 +345,6 @@ class UpdateItemBody implements IBaseItem {
   @IsString()
   name: string;
 
-  /**
-   * Updated description (optional).
-   */
   @JSONSchema({
     title: 'Item Description',
     description: 'Updated description of the item',
@@ -469,9 +356,6 @@ class UpdateItemBody implements IBaseItem {
   @IsString()
   description: string;
 
-  /**
-   * Section ID (auto-managed).
-   */
   @JSONSchema({
     title: 'Section ID',
     description: 'Section ID to which the item belongs (auto-managed)',
@@ -483,9 +367,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   sectionId: string;
 
-  /**
-   * Order (auto-managed).
-   */
   @JSONSchema({
     title: 'Item Order',
     description: 'Order key for item placement (auto-managed)',
@@ -496,9 +377,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   order: string;
 
-  /**
-   * Item details (auto-managed).
-   */
   @JSONSchema({
     title: 'Item Details',
     description: 'Item details (depends on type) – video, blog, or quiz',
@@ -508,9 +386,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   itemDetails: IVideoDetails | IQuizDetails | IBlogDetails;
 
-  /**
-   * Created at timestamp (auto-managed).
-   */
   @JSONSchema({
     title: 'Created At',
     description: 'Item creation timestamp (auto-managed)',
@@ -522,9 +397,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   createdAt: Date;
 
-  /**
-   * Updated at timestamp (auto-managed).
-   */
   @JSONSchema({
     title: 'Updated At',
     description: 'Item update timestamp (auto-managed)',
@@ -536,9 +408,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEmpty()
   updatedAt: Date;
 
-  /**
-   * Updated type, if changing item category.
-   */
   @JSONSchema({
     title: 'Item Type',
     description: 'Updated type of the item: VIDEO, BLOG, or QUIZ',
@@ -550,9 +419,6 @@ class UpdateItemBody implements IBaseItem {
   @IsEnum(ItemType)
   type: ItemType;
 
-  /**
-   * Optional: reorder after this item.
-   */
   @JSONSchema({
     title: 'After Item ID',
     description: 'Place item after this item ID',
@@ -565,9 +431,6 @@ class UpdateItemBody implements IBaseItem {
   @IsString()
   afterItemId?: string;
 
-  /**
-   * Optional: reorder before this item.
-   */
   @JSONSchema({
     title: 'Before Item ID',
     description: 'Place item before this item ID',
@@ -580,9 +443,6 @@ class UpdateItemBody implements IBaseItem {
   @IsString()
   beforeItemId?: string;
 
-  /**
-   * Updated video details (if type is VIDEO).
-   */
   @JSONSchema({
     title: 'Video Details',
     description: 'Updated details specific to video items',
@@ -594,9 +454,6 @@ class UpdateItemBody implements IBaseItem {
   @Type(() => VideoDetailsPayloadValidator)
   videoDetails?: VideoDetailsPayloadValidator;
 
-  /**
-   * Updated blog details (if type is BLOG).
-   */
   @JSONSchema({
     title: 'Blog Details',
     description: 'Updated details specific to blog items',
@@ -608,9 +465,6 @@ class UpdateItemBody implements IBaseItem {
   @Type(() => BlogDetailsPayloadValidator)
   blogDetails?: BlogDetailsPayloadValidator;
 
-  /**
-   * Updated quiz details (if type is QUIZ).
-   */
   @JSONSchema({
     title: 'Quiz Details',
     description: 'Updated details specific to quiz items',
@@ -623,15 +477,7 @@ class UpdateItemBody implements IBaseItem {
   quizDetails?: QuizDetailsPayloadValidator;
 }
 
-/**
- * Body to move an item within its section.
- *
- * @category Courses/Validators/ItemValidators
- */
 class MoveItemBody {
-  /**
-   * Move after this item (optional).
-   */
   @JSONSchema({
     title: 'After Item ID',
     description: 'Move the item after this item ID',
@@ -644,9 +490,6 @@ class MoveItemBody {
   @IsString()
   afterItemId?: string;
 
-  /**
-   * Move before this item (optional).
-   */
   @JSONSchema({
     title: 'Before Item ID',
     description: 'Move the item before this item ID',
@@ -659,9 +502,6 @@ class MoveItemBody {
   @IsString()
   beforeItemId?: string;
 
-  /**
-   * Validation helper – at least one of afterItemId or beforeItemId must be present.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -675,9 +515,6 @@ class MoveItemBody {
   })
   onlyOneAllowed: string;
 
-  /**
-   * Validation helper – both afterItemId and beforeItemId cannot be present at the same time.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -692,14 +529,7 @@ class MoveItemBody {
   bothNotAllowed: string;
 }
 
-/**
- * Route parameters for creating a new item.
- *
- * @category Courses/Validators/ItemValidators
- *
- */
 class CreateItemParams {
-  /** Version ID of the course */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version',
@@ -711,7 +541,6 @@ class CreateItemParams {
   @IsString()
   versionId: string;
 
-  /** Module ID inside the version */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module inside the version',
@@ -723,7 +552,6 @@ class CreateItemParams {
   @IsString()
   moduleId: string;
 
-  /** Section ID inside the module */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section inside the module',
@@ -736,14 +564,7 @@ class CreateItemParams {
   sectionId: string;
 }
 
-/**
- * Route parameters for retrieving all items in a section.
- *
- * @category Courses/Validators/ItemValidators
- *
- */
 class ReadAllItemsParams {
-  /** Version ID of the course */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the items',
@@ -755,7 +576,6 @@ class ReadAllItemsParams {
   @IsString()
   versionId: string;
 
-  /** Module ID inside the version */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module containing the section',
@@ -767,7 +587,6 @@ class ReadAllItemsParams {
   @IsString()
   moduleId: string;
 
-  /** Section ID inside the module */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section containing the items',
@@ -780,13 +599,7 @@ class ReadAllItemsParams {
   sectionId: string;
 }
 
-/**
- * Route parameters for updating a specific item.
- *
- * @category Courses/Validators/ItemValidators
- */
 class UpdateItemParams {
-  /** Version ID of the course */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the item',
@@ -798,7 +611,6 @@ class UpdateItemParams {
   @IsString()
   versionId: string;
 
-  /** Module ID inside the version */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module containing the section',
@@ -810,7 +622,6 @@ class UpdateItemParams {
   @IsString()
   moduleId: string;
 
-  /** Section ID inside the module */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section containing the item',
@@ -822,7 +633,6 @@ class UpdateItemParams {
   @IsString()
   sectionId: string;
 
-  /** Target item ID to update */
   @JSONSchema({
     title: 'Item ID',
     description: 'ID of the item to be updated',
@@ -835,13 +645,7 @@ class UpdateItemParams {
   itemId: string;
 }
 
-/**
- * Route parameters for moving an item.
- *
- * @category Courses/Validators/ItemValidators
- */
 class MoveItemParams {
-  /** Version ID of the course */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the item',
@@ -853,7 +657,6 @@ class MoveItemParams {
   @IsString()
   versionId: string;
 
-  /** Module ID inside the version */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module containing the section',
@@ -865,7 +668,6 @@ class MoveItemParams {
   @IsString()
   moduleId: string;
 
-  /** Section ID inside the module */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section containing the item',
@@ -877,7 +679,6 @@ class MoveItemParams {
   @IsString()
   sectionId: string;
 
-  /** Item ID to move */
   @JSONSchema({
     title: 'Item ID',
     description: 'ID of the item to be moved',
@@ -890,13 +691,7 @@ class MoveItemParams {
   itemId: string;
 }
 
-/**
- * Route parameters for deleting an item.
- *
- * @category Courses/Validators/ItemValidators
- */
 class DeleteItemParams {
-  /** ItemsGroupId */
   @JSONSchema({
     title: 'Items Group ID',
     description: 'ID of the items group containing the item',
@@ -908,7 +703,6 @@ class DeleteItemParams {
   @IsString()
   itemsGroupId: string;
 
-  /** ItemId */
   @JSONSchema({
     title: 'Item ID',
     description: 'ID of the item to delete',
@@ -921,12 +715,6 @@ class DeleteItemParams {
   itemId: string;
 }
 
-/**
- * Response for Item Not Found error.
- *
- * @category Courses/Validators/ItemValidators
- *
- */
 class ItemNotFoundErrorResponse {
   @JSONSchema({
     description: 'The error message',
@@ -939,12 +727,6 @@ class ItemNotFoundErrorResponse {
   message: string;
 }
 
-/**
- * Response for Item Data
- *
- * @category Courses/Validators/ItemValidators
- *
- */
 class ItemDataResponse {
   @JSONSchema({
     description: 'The item data',
@@ -963,12 +745,6 @@ class ItemDataResponse {
   version?: Record<string, any>;
 }
 
-/**
- * Response for Deleted Item
- *
- * @category Courses/Validators/ItemValidators
- *
- */
 class DeletedItemResponse {
   @JSONSchema({
     description: 'The deleted item data',

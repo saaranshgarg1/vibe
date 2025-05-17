@@ -20,11 +20,6 @@ import {
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
-/**
- * Controller for managing student enrollments in courses.
- *
- * @category Users/Controllers
- */
 @JsonController('/users', {transformResponse: true})
 @Service()
 @OpenAPI({

@@ -11,16 +11,7 @@ import {ISection} from 'shared/interfaces/Models';
 import {ID} from 'shared/types';
 import {JSONSchema} from 'class-validator-jsonschema';
 
-/**
- * Payload for creating a section inside a module.
- *
- * @category Courses/Validators/SectionValidators
- */
 class CreateSectionBody implements Partial<ISection> {
-  /**
-   * Name/title of the section.
-   * Maximum 255 characters.
-   */
   @JSONSchema({
     title: 'Section Name',
     description: 'Name/title of the section',
@@ -33,10 +24,6 @@ class CreateSectionBody implements Partial<ISection> {
   @MaxLength(255)
   name: string;
 
-  /**
-   * Description or purpose of the section.
-   * Maximum 1000 characters.
-   */
   @JSONSchema({
     title: 'Section Description',
     description: 'Description or purpose of the section',
@@ -50,9 +37,6 @@ class CreateSectionBody implements Partial<ISection> {
   @MaxLength(1000)
   description: string;
 
-  /**
-   * Optional: place the section after this section ID.
-   */
   @JSONSchema({
     title: 'After Section ID',
     description: 'Optional: Place the new section after this section ID',
@@ -65,9 +49,6 @@ class CreateSectionBody implements Partial<ISection> {
   @IsString()
   afterSectionId?: string;
 
-  /**
-   * Optional: place the section before this section ID.
-   */
   @JSONSchema({
     title: 'Before Section ID',
     description: 'Optional: Place the new section before this section ID',
@@ -81,16 +62,7 @@ class CreateSectionBody implements Partial<ISection> {
   beforeSectionId?: string;
 }
 
-/**
- * Payload for updating a section.
- * Allows partial updates to name or description.
- *
- * @category Courses/Validators/SectionValidators
- */
 class UpdateSectionBody implements Partial<ISection> {
-  /**
-   * New name of the section (optional).
-   */
   @JSONSchema({
     title: 'Section Name',
     description: 'Updated name of the section',
@@ -103,9 +75,6 @@ class UpdateSectionBody implements Partial<ISection> {
   @MaxLength(255)
   name: string;
 
-  /**
-   * New description of the section (optional).
-   */
   @JSONSchema({
     title: 'Section Description',
     description: 'Updated description of the section',
@@ -119,9 +88,6 @@ class UpdateSectionBody implements Partial<ISection> {
   @MaxLength(1000)
   description: string;
 
-  /**
-   * At least one of name or description must be provided.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -137,15 +103,7 @@ class UpdateSectionBody implements Partial<ISection> {
   nameOrDescription: string;
 }
 
-/**
- * Payload for reordering a section within a module.
- *
- * @category Courses/Validators/SectionValidators
- */
 class MoveSectionBody {
-  /**
-   * Optional: move after this section ID.
-   */
   @JSONSchema({
     title: 'After Section ID',
     description: 'Move the section after this section ID',
@@ -158,9 +116,6 @@ class MoveSectionBody {
   @IsString()
   afterSectionId?: string;
 
-  /**
-   * Optional: move before this section ID.
-   */
   @JSONSchema({
     title: 'Before Section ID',
     description: 'Move the section before this section ID',
@@ -173,9 +128,6 @@ class MoveSectionBody {
   @IsString()
   beforeSectionId?: string;
 
-  /**
-   * Validation helper — at least one position ID must be provided.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -190,9 +142,6 @@ class MoveSectionBody {
   })
   onlyOneAllowed: string;
 
-  /**
-   * Validation helper — only one of before/after should be used.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -208,15 +157,7 @@ class MoveSectionBody {
   bothNotAllowed: string;
 }
 
-/**
- * Route parameters for creating a section in a module.
- *
- * @category Courses/Validators/SectionValidators
- */
 class CreateSectionParams {
-  /**
-   * Version ID of the course the module belongs to.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version to which the module belongs',
@@ -229,9 +170,6 @@ class CreateSectionParams {
   @IsNotEmpty()
   versionId: string;
 
-  /**
-   * Module ID where the new section will be added.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module where the new section will be added',
@@ -245,15 +183,7 @@ class CreateSectionParams {
   moduleId: string;
 }
 
-/**
- * Route parameters for moving a section within a module.
- *
- * @category Courses/Validators/SectionValidators
- */
 class MoveSectionParams {
-  /**
-   * Version ID of the course.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the module',
@@ -266,9 +196,6 @@ class MoveSectionParams {
   @IsNotEmpty()
   versionId: string;
 
-  /**
-   * Module ID within the version.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module containing the section',
@@ -281,9 +208,6 @@ class MoveSectionParams {
   @IsNotEmpty()
   moduleId: string;
 
-  /**
-   * Section ID that needs to be moved.
-   */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section to be moved',
@@ -297,15 +221,7 @@ class MoveSectionParams {
   sectionId: string;
 }
 
-/**
- * Route parameters for updating a section.
- *
- * @category Courses/Validators/SectionValidators
- */
 class UpdateSectionParams {
-  /**
-   * Version ID of the course.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the module',
@@ -318,9 +234,6 @@ class UpdateSectionParams {
   @IsNotEmpty()
   versionId: string;
 
-  /**
-   * Module ID where the section exists.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module containing the section',
@@ -333,9 +246,6 @@ class UpdateSectionParams {
   @IsNotEmpty()
   moduleId: string;
 
-  /**
-   * Section ID to be updated.
-   */
   @JSONSchema({
     title: 'Section ID',
     description: 'ID of the section to be updated',
@@ -349,12 +259,7 @@ class UpdateSectionParams {
   sectionId: string;
 }
 
-/**
- * Response for Section operations
- *
- * @category Courses/Validators/SectionValidators
- */
-class SectionVersionResponse {
+class SectionDataResponse {
   @JSONSchema({
     description: 'The updated course version data containing the section',
     type: 'object',
@@ -364,11 +269,6 @@ class SectionVersionResponse {
   version: Record<string, any>;
 }
 
-/**
- * Response for Section Not Found error
- *
- * @category Courses/Validators/SectionValidators
- */
 class SectionNotFoundErrorResponse {
   @JSONSchema({
     description: 'The error message',
@@ -388,6 +288,6 @@ export {
   CreateSectionParams,
   MoveSectionParams,
   UpdateSectionParams,
-  SectionVersionResponse,
+  SectionDataResponse,
   SectionNotFoundErrorResponse,
 };

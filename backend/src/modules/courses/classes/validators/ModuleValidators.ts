@@ -10,16 +10,7 @@ import {
 import {IModule, ISection} from 'shared/interfaces/Models';
 import {JSONSchema} from 'class-validator-jsonschema';
 
-/**
- * Payload for creating a new module inside a course version.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class CreateModuleBody implements Partial<IModule> {
-  /**
-   * Name/title of the module.
-   * Maximum 255 characters.
-   */
   @JSONSchema({
     title: 'Module Name',
     description: 'Name/title of the module',
@@ -32,10 +23,6 @@ class CreateModuleBody implements Partial<IModule> {
   @MaxLength(255)
   name: string;
 
-  /**
-   * Detailed description of the module.
-   * Maximum 1000 characters.
-   */
   @JSONSchema({
     title: 'Module Description',
     description: 'Detailed description of the module content',
@@ -49,9 +36,6 @@ class CreateModuleBody implements Partial<IModule> {
   @MaxLength(1000)
   description: string;
 
-  /**
-   * Optional: Move the module after this ID.
-   */
   @JSONSchema({
     title: 'After Module ID',
     description: 'Optional: Position the new module after this module ID',
@@ -64,9 +48,6 @@ class CreateModuleBody implements Partial<IModule> {
   @IsString()
   afterModuleId?: string;
 
-  /**
-   * Optional: Move the module before this ID.
-   */
   @JSONSchema({
     title: 'Before Module ID',
     description: 'Optional: Position the new module before this module ID',
@@ -80,16 +61,7 @@ class CreateModuleBody implements Partial<IModule> {
   beforeModuleId?: string;
 }
 
-/**
- * Payload for updating an existing module.
- * Supports partial updates.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class UpdateModuleBody implements Partial<IModule> {
-  /**
-   * New name of the module (optional).
-   */
   @JSONSchema({
     title: 'Module Name',
     description: 'Updated name of the module',
@@ -102,9 +74,6 @@ class UpdateModuleBody implements Partial<IModule> {
   @MaxLength(255)
   name: string;
 
-  /**
-   * New description of the module (optional).
-   */
   @JSONSchema({
     title: 'Module Description',
     description: 'Updated description of the module content',
@@ -118,9 +87,6 @@ class UpdateModuleBody implements Partial<IModule> {
   @MaxLength(1000)
   description: string;
 
-  /**
-   * At least one of `name` or `description` must be provided.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -136,15 +102,7 @@ class UpdateModuleBody implements Partial<IModule> {
   nameOrDescription: string;
 }
 
-/**
- * Payload for moving a module within its version.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class MoveModuleBody {
-  /**
-   * Optional: Move the module after this ID.
-   */
   @JSONSchema({
     title: 'After Module ID',
     description: 'Move the module after this module ID',
@@ -157,9 +115,6 @@ class MoveModuleBody {
   @IsString()
   afterModuleId?: string;
 
-  /**
-   * Optional: Move the module before this ID.
-   */
   @JSONSchema({
     title: 'Before Module ID',
     description: 'Move the module before this module ID',
@@ -172,9 +127,6 @@ class MoveModuleBody {
   @IsString()
   beforeModuleId?: string;
 
-  /**
-   * Validation helper: at least one of afterModuleId or beforeModuleId is required.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -189,9 +141,6 @@ class MoveModuleBody {
   })
   onlyOneAllowed: string;
 
-  /**
-   * Validation helper: both afterModuleId and beforeModuleId should not be used together.
-   */
   @JSONSchema({
     deprecated: true,
     description:
@@ -206,15 +155,7 @@ class MoveModuleBody {
   bothNotAllowed: string;
 }
 
-/**
- * Route parameters for creating a module.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class CreateModuleParams {
-  /**
-   * ID of the course version to which the module will be added.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version to which the module will be added',
@@ -227,15 +168,7 @@ class CreateModuleParams {
   versionId: string;
 }
 
-/**
- * Route parameters for updating a module.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class UpdateModuleParams {
-  /**
-   * ID of the course version.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the module',
@@ -247,9 +180,6 @@ class UpdateModuleParams {
   @IsString()
   versionId: string;
 
-  /**
-   * ID of the module to be updated.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module to be updated',
@@ -262,15 +192,7 @@ class UpdateModuleParams {
   moduleId: string;
 }
 
-/**
- * Route parameters for moving a module.
- *
- * @category Courses/Validators/ModuleValidators
- */
 class MoveModuleParams {
-  /**
-   * ID of the course version.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the module',
@@ -282,9 +204,6 @@ class MoveModuleParams {
   @IsString()
   versionId: string;
 
-  /**
-   * ID of the module to move.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module to move',
@@ -297,15 +216,7 @@ class MoveModuleParams {
   moduleId: string;
 }
 
-/**
- * Route parameters for deleting a module from a course version.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class DeleteModuleParams {
-  /**
-   * ID of the course version.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version containing the module',
@@ -317,9 +228,6 @@ class DeleteModuleParams {
   @IsString()
   versionId: string;
 
-  /**
-   * ID of the module to delete.
-   */
   @JSONSchema({
     title: 'Module ID',
     description: 'ID of the module to delete',
@@ -332,12 +240,7 @@ class DeleteModuleParams {
   moduleId: string;
 }
 
-/**
- * Response for Module operations
- *
- * @category Courses/Validators/ModuleValidators
- */
-class ModuleVersionResponse {
+class ModuleDataResponse {
   @JSONSchema({
     description: 'The updated course version data containing modules',
     type: 'object',
@@ -347,11 +250,6 @@ class ModuleVersionResponse {
   version: Record<string, any>;
 }
 
-/**
- * Response for Module Not Found error
- *
- * @category Courses/Validators/ModuleValidators
- */
 class ModuleNotFoundErrorResponse {
   @JSONSchema({
     description: 'The error message',
@@ -364,11 +262,6 @@ class ModuleNotFoundErrorResponse {
   message: string;
 }
 
-/**
- * Response for Module deletion
- *
- * @category Courses/Validators/ModuleValidators
- */
 class ModuleDeletedResponse {
   @JSONSchema({
     description: 'Deletion confirmation message',
@@ -389,7 +282,7 @@ export {
   MoveModuleParams,
   MoveModuleBody,
   DeleteModuleParams,
-  ModuleVersionResponse,
+  ModuleDataResponse,
   ModuleNotFoundErrorResponse,
   ModuleDeletedResponse,
 };

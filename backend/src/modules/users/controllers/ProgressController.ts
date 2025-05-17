@@ -34,11 +34,6 @@ import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 @OpenAPI({
   tags: ['User Progress'],
 })
-/**
- * Controller for managing user progress in courses.
- *
- * @category Users/Controllers
- */
 class ProgressController {
   constructor(
     @Inject('ProgressService')

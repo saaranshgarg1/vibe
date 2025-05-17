@@ -26,23 +26,13 @@ import {
   UpdateModuleBody,
   UpdateModuleParams,
   DeleteModuleParams,
-  ModuleVersionResponse,
+  ModuleDataResponse,
   ModuleNotFoundErrorResponse,
   ModuleDeletedResponse,
 } from '../classes/validators/ModuleValidators';
 import {calculateNewOrder} from '../utils/calculateNewOrder';
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
-
-/**
- * Controller for managing modules within a course version.
- * Handles creation, updating, and reordering of modules.
- *
- * @category Courses/Controllers
- * @categoryDescription
- * Provides endpoints for adding, modifying, and reordering course modules.
- * Modules are nested under specific versions and define core content units.
- */
 
 @OpenAPI({
   tags: ['Course Modules'],
@@ -58,22 +48,10 @@ export class ModuleController {
     }
   }
 
-  /**
-   * Create a new module under a specific course version.
-   *
-   * @param params - Route parameters including the course version ID.
-   * @param body - Payload containing module name, description, etc.
-   * @returns The updated course version with the new module.
-   *
-   * @throws InternalServerError on any failure during module creation.
-   *
-   * @category Courses/Controllers
-   */
-
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules')
   @HttpCode(201)
-  @ResponseSchema(ModuleVersionResponse, {
+  @ResponseSchema(ModuleDataResponse, {
     description: 'Module created successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -124,21 +102,9 @@ export class ModuleController {
     }
   }
 
-  /**
-   * Update an existing module's name or description.
-   *
-   * @param params - Route parameters including versionId and moduleId.
-   * @param body - Fields to update such as name and/or description.
-   * @returns The updated course version.
-   *
-   * @throws HTTPError(404) if the module is not found.
-   *
-   * @category Courses/Controllers
-   */
-
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId')
-  @ResponseSchema(ModuleVersionResponse, {
+  @ResponseSchema(ModuleDataResponse, {
     description: 'Module updated successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -197,23 +163,9 @@ export class ModuleController {
     }
   }
 
-  /**
-   * Reorder a module within its course version.
-   * The new position is determined using beforeModuleId or afterModuleId.
-   *
-   * @param params - Route parameters including versionId and moduleId.
-   * @param body - Positioning details: beforeModuleId or afterModuleId.
-   * @returns The updated course version with modules in new order.
-   *
-   * @throws UpdateError if neither beforeModuleId nor afterModuleId is provided.
-   * @throws HTTPError(500) for other internal errors.
-   *
-   * @category Courses/Controllers
-   */
-
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId/move')
-  @ResponseSchema(ModuleVersionResponse, {
+  @ResponseSchema(ModuleDataResponse, {
     description: 'Module moved successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -289,18 +241,6 @@ export class ModuleController {
     }
   }
 
-  /**
-   * Delete a module from a specific course version.
-   *
-   * @param params - Parameters including version ID and module ID
-   * @returns The deleted module object
-   *
-   * @throws BadRequestError if version ID or module ID is missing
-   * @throws HttpError(404) if the module is not found
-   * @throws HttpError(500) for delete errors
-   *
-   * @category Courses/Controllers
-   */
   @Authorized(['admin'])
   @Delete('/versions/:versionId/modules/:moduleId')
   @ResponseSchema(ModuleDeletedResponse, {

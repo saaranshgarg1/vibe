@@ -3,16 +3,7 @@ import {IsEmpty, IsNotEmpty, IsString, IsMongoId} from 'class-validator';
 import {ICourseVersion} from 'shared/interfaces/Models';
 import {JSONSchema} from 'class-validator-jsonschema';
 
-/**
- * DTO for creating a new course version.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class CreateCourseVersionBody implements Partial<ICourseVersion> {
-  /**
-   * ID of the course this version belongs to.
-   * This is auto-populated and should remain empty in the request body.
-   */
   @JSONSchema({
     title: 'Course ID',
     description: 'ID of the course this version belongs to (auto-managed)',
@@ -24,9 +15,6 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
   @IsEmpty()
   courseId?: string;
 
-  /**
-   * The version label or identifier (e.g., "v1.0", "Fall 2025").
-   */
   @JSONSchema({
     title: 'Version Label',
     description: 'The version label or identifier (e.g., v1.0, Fall 2025)',
@@ -37,9 +25,6 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
   @IsString()
   version: string;
 
-  /**
-   * A brief description of the course version.
-   */
   @JSONSchema({
     title: 'Version Description',
     description: 'A brief description of the course version',
@@ -51,15 +36,7 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
   description: string;
 }
 
-/**
- * Route parameters for creating a course version under a specific course.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class CreateCourseVersionParams {
-  /**
-   * ID of the course to attach the new version to.
-   */
   @JSONSchema({
     title: 'Course ID',
     description: 'ID of the course to attach the new version to',
@@ -72,15 +49,7 @@ class CreateCourseVersionParams {
   id: string;
 }
 
-/**
- * Route parameters for reading a course version by ID.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class ReadCourseVersionParams {
-  /**
-   * ID of the course version to retrieve.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version to retrieve',
@@ -93,15 +62,7 @@ class ReadCourseVersionParams {
   id: string;
 }
 
-/**
- * Route parameters for deleting a course version by ID.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class DeleteCourseVersionParams {
-  /**
-   * ID of the course version to delete.
-   */
   @JSONSchema({
     title: 'Version ID',
     description: 'ID of the course version to delete',
@@ -113,9 +74,6 @@ class DeleteCourseVersionParams {
   @IsString()
   versionId: string;
 
-  /**
-   * ID of the course to which the version belongs.
-   */
   @JSONSchema({
     title: 'Course ID',
     description: 'ID of the course to which the version belongs',
@@ -128,11 +86,6 @@ class DeleteCourseVersionParams {
   courseId: string;
 }
 
-/**
- * Response for a single course version data.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class CourseVersionDataResponse {
   @JSONSchema({
     description: 'ID of the course version',
@@ -187,11 +140,6 @@ class CourseVersionDataResponse {
   updatedAt: Date;
 }
 
-/**
- * Response for course version not found error.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class CourseVersionNotFoundErrorResponse {
   @JSONSchema({
     description: 'HTTP status code',
@@ -218,11 +166,6 @@ class CourseVersionNotFoundErrorResponse {
   error: string;
 }
 
-/**
- * Response for course version creation.
- *
- * @category Courses/Validators/CourseVersionValidators
- */
 class CreateCourseVersionResponse {
   @JSONSchema({
     description: 'The updated course object',

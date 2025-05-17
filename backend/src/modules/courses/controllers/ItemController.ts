@@ -15,7 +15,7 @@ import {
 } from 'routing-controllers';
 import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
 import {UpdateError} from 'shared/errors/errors';
-import {DeleteError, ReadError} from 'shared/errors/errors';
+import {DeleteError} from 'shared/errors/errors';
 import {Inject, Service} from 'typedi';
 import {Item, ItemsGroup} from '../classes/transformers/Item';
 import {
@@ -35,16 +35,6 @@ import {calculateNewOrder} from '../utils/calculateNewOrder';
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
-/**
- * Controller for managing items within course modules and sections.
- * Handles operations such as creation, retrieval, update, and reordering.
- *
- * @category Courses/Controllers
- * @categoryDescription
- * Provides endpoints for working with "items" inside sections of modules
- * within course versions. This includes content like videos, blogs, or quizzes.
- */
-
 @OpenAPI({
   tags: ['Course Items'],
 })
@@ -59,18 +49,6 @@ export class ItemController {
     }
   }
 
-  /**
-   * Create a new item under a specific section of a module in a course version.
-   *
-   * @param params - Route parameters including versionId, moduleId, and sectionId.
-   * @param body - The item data to be created.
-   * @returns The updated itemsGroup and version.
-   *
-   * @throws HTTPError(500) on internal errors.
-   *
-   * @category Courses/Controllers
-   */
-
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules/:moduleId/sections/:sectionId/items')
   @HttpCode(201)
@@ -82,7 +60,7 @@ export class ItemController {
     statusCode: 400,
   })
   @ResponseSchema(ItemNotFoundErrorResponse, {
-    description: 'Required resources not found',
+    description: 'Item not found',
     statusCode: 404,
   })
   @OpenAPI({
@@ -101,11 +79,9 @@ export class ItemController {
 
       //Find Module
       const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
 
       //Find Section
       const section = module.sections.find(s => s.sectionId === sectionId);
-      if (!section) throw new ReadError('Section not found');
 
       //Fetch ItemGroup
       const itemsGroup = plainToInstance(
@@ -144,25 +120,11 @@ export class ItemController {
         version: instanceToPlain(updatedVersion),
       };
     } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
       if (error instanceof Error) {
         throw new HttpError(500, error.message);
       }
     }
   }
-
-  /**
-   * Retrieve all items from a section of a module in a course version.
-   *
-   * @param params - Route parameters including versionId, moduleId, and sectionId.
-   * @returns The list of items within the section.
-   *
-   * @throws HTTPError(500) on internal errors.
-   *
-   * @category Courses/Controllers
-   */
 
   @Authorized(['admin', 'instructor', 'student'])
   @Get('/versions/:versionId/modules/:moduleId/sections/:sectionId/items')
@@ -174,7 +136,7 @@ export class ItemController {
     statusCode: 400,
   })
   @ResponseSchema(ItemNotFoundErrorResponse, {
-    description: 'Required resources not found',
+    description: 'Item not found',
     statusCode: 404,
   })
   @OpenAPI({
@@ -190,42 +152,24 @@ export class ItemController {
 
       //Find Module
       const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
 
       //Find Section
       const section = module.sections.find(s => s.sectionId === sectionId);
-      if (!section) throw new ReadError('Section not found');
 
       //Fetch Items
       const itemsGroup = await this.courseRepo.readItemsGroup(
         section.itemsGroupId.toString(),
       );
-      if (!itemsGroup) throw new ReadError('Items group not found');
 
       return {
         itemsGroup: itemsGroup,
       };
     } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
       if (error instanceof Error) {
         throw new HttpError(500, error.message);
       }
     }
   }
-
-  /**
-   * Update an existing item in a section of a module in a course version.
-   *
-   * @param params - Route parameters including versionId, moduleId, sectionId, and itemId.
-   * @param body - Fields to update, including name, description, type, and itemDetails.
-   * @returns The updated itemsGroup and version.
-   *
-   * @throws HTTPError(500) on internal errors.
-   *
-   * @category Courses/Controllers
-   */
 
   @Authorized(['admin'])
   @Put(
@@ -239,7 +183,7 @@ export class ItemController {
     statusCode: 400,
   })
   @ResponseSchema(ItemNotFoundErrorResponse, {
-    description: 'Required resources not found',
+    description: 'Item not found',
     statusCode: 404,
   })
   @OpenAPI({
@@ -258,21 +202,17 @@ export class ItemController {
 
       //Find Module
       const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
 
       //Find Section
       const section = module.sections.find(s => s.sectionId === sectionId);
-      if (!section) throw new ReadError('Section not found');
 
       //Fetch ItemsGroup
       const itemsGroup = await this.courseRepo.readItemsGroup(
         section.itemsGroupId.toString(),
       );
-      if (!itemsGroup) throw new ReadError('Items group not found');
 
       //Find Item
       const item = itemsGroup.items.find(i => i.itemId === itemId);
-      if (!item) throw new ReadError('Item not found');
 
       //Update Item
       Object.assign(item, body.name ? {name: body.name} : {});
@@ -320,22 +260,11 @@ export class ItemController {
         version: instanceToPlain(updatedVersion),
       };
     } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
       if (error instanceof Error) {
         throw new HttpError(500, error.message);
       }
     }
   }
-
-  /**
-   * Delete an item from a section of a module in a course version.
-   * @param params - Route parameters including versionId, moduleId, sectionId, and itemId.
-   * @return The updated itemsGroup and version.
-   * @throw HTTPError(500) on internal errors.
-   * @category Courses/Controllers
-   */
 
   @Authorized(['instructor', 'admin'])
   @Delete('/itemGroups/:itemsGroupId/items/:itemId')
@@ -405,18 +334,6 @@ export class ItemController {
     }
   }
 
-  /**
-   * Move an item to a new position within a section by recalculating its order.
-   *
-   * @param params - Route parameters including versionId, moduleId, sectionId, and itemId.
-   * @param body - Movement instructions including `afterItemId` or `beforeItemId`.
-   * @returns The updated itemsGroup and version.
-   *
-   * @throws BadRequestError if both afterItemId and beforeItemId are missing.
-   * @throws HTTPError(500) on internal errors.
-   *
-   * @category Courses/Controllers
-   */
   @Authorized(['admin'])
   @Put(
     '/versions/:versionId/modules/:moduleId/sections/:sectionId/items/:itemId/move',
@@ -429,7 +346,7 @@ export class ItemController {
     statusCode: 400,
   })
   @ResponseSchema(ItemNotFoundErrorResponse, {
-    description: 'Required resources not found',
+    description: 'Item not found',
     statusCode: 404,
   })
   @OpenAPI({
@@ -451,21 +368,17 @@ export class ItemController {
 
       //Find Module
       const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
 
       //Find Section
       const section = module.sections.find(s => s.sectionId === sectionId);
-      if (!section) throw new ReadError('Section not found');
 
       //Fetch ItemsGroup
       const itemsGroup = await this.courseRepo.readItemsGroup(
         section.itemsGroupId.toString(),
       );
-      if (!itemsGroup) throw new ReadError('Items group not found');
 
       //Find Item
       const item = itemsGroup.items.find(i => i.itemId === itemId);
-      if (!item) throw new ReadError('Item not found');
 
       //Sort Items based on order
       const sortedItems = itemsGroup.items.sort((a, b) =>
@@ -505,9 +418,6 @@ export class ItemController {
         version: instanceToPlain(updatedVersion),
       };
     } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
       if (error instanceof UpdateError) {
         throw new BadRequestError(error.message);
       }

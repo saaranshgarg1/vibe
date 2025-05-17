@@ -157,9 +157,6 @@ export class ModuleController {
       if (error instanceof ReadError) {
         throw new HttpError(404, error.message);
       }
-      if (error instanceof Error) {
-        throw new HttpError(500, error.message);
-      }
     }
   }
 

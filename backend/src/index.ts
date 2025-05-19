@@ -9,15 +9,18 @@ import {
   useContainer,
   useExpressServer,
 } from 'routing-controllers';
-import {coursesModuleOptions} from 'modules/courses';
 import Container from 'typedi';
 import {IDatabase} from 'shared/database';
 import {MongoDatabase} from 'shared/database/providers/MongoDatabaseProvider';
 import {dbConfig} from 'config/db';
-import {usersModuleOptions} from 'modules/users';
 import * as firebase from 'firebase-admin';
 import {app} from 'firebase-admin';
-import {authModuleOptions} from 'modules';
+
+// Import all module options
+import {authModuleOptions} from './modules/auth';
+import {coursesModuleOptions} from './modules/courses';
+import {usersModuleOptions} from './modules/users';
+import {docsModuleOptions} from './modules/docs';
 
 export const application = Express();
 
@@ -57,7 +60,18 @@ export const ServiceFactory = (
   console.log('Starting Server');
   console.log('--------------------------------------------------------');
 
-  useExpressServer(service, options);
+  // Create combined routing controllers options
+  const routingControllersOptions = {
+    ...options,
+    controllers: [
+      ...(authModuleOptions.controllers as Function[]),
+      ...(coursesModuleOptions.controllers as Function[]),
+      ...(usersModuleOptions.controllers as Function[]),
+      ...(docsModuleOptions.controllers as Function[]),
+    ],
+  };
+
+  useExpressServer(service, routingControllersOptions);
 
   return service;
 };

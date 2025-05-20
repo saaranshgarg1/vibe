@@ -5,6 +5,9 @@ const {validationMetadatasToSchemas} = require('class-validator-jsonschema');
 const fs = require('fs');
 const path = require('path');
 
+// Set environment variable to skip database initialization
+process.env.SKIP_DB_CONNECTION = 'true';
+
 // Parse command line arguments
 const args = process.argv.slice(2);
 const outputToStdout = args.includes('--stdout');

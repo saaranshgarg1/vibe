@@ -8,7 +8,14 @@ const path = require('path');
 // Parse command line arguments
 const args = process.argv.slice(2);
 const outputToStdout = args.includes('--stdout');
-
+// Parse output file argument
+const outputFileIndex = args.findIndex(
+  arg => arg === '--output' || arg === '-o',
+);
+const outputFile =
+  outputFileIndex !== -1 && outputFileIndex + 1 < args.length
+    ? args[outputFileIndex + 1]
+    : null;
 // Import module options using require
 const {authModuleOptions} = require('../src/modules/auth');
 const {coursesModuleOptions} = require('../src/modules/courses');
@@ -55,6 +62,80 @@ const generateOpenAPISpec = () => {
         email: 'support@vibe.com',
       },
     },
+    tags: [
+      // Authentication section
+      {
+        name: 'Authentication',
+        description: 'Operations for user authentication and authorization',
+      },
+
+      // Course section and sub-components
+      {
+        name: 'Courses',
+        description: 'Operations related to courses management',
+        'x-displayName': 'Courses',
+      },
+      {
+        name: 'Course Versions',
+        description: 'Operations for managing different versions of a course',
+        'x-displayName': 'Versions',
+        'x-resourceGroup': 'Courses',
+      },
+      {
+        name: 'Course Modules',
+        description: 'Operations for managing modules within a course version',
+        'x-displayName': 'Modules',
+        'x-resourceGroup': 'Courses',
+      },
+      {
+        name: 'Course Sections',
+        description: 'Operations for managing sections within a course module',
+        'x-displayName': 'Sections',
+        'x-resourceGroup': 'Courses',
+      },
+      {
+        name: 'Course Items',
+        description:
+          'Operations for managing individual items within a section',
+        'x-displayName': 'Items',
+        'x-resourceGroup': 'Courses',
+      },
+
+      // User management section
+      {
+        name: 'User Enrollments',
+        description: 'Operations for managing user enrollments in courses',
+      },
+      {
+        name: 'User Progress',
+        description: 'Operations for tracking and managing user progress',
+      },
+    ],
+    // Use Scalar's preferred grouping approach
+    'x-tagGroups': [
+      {
+        name: 'Authentication',
+        tags: ['Authentication'],
+      },
+      {
+        name: 'Course Management',
+        tags: [
+          'Courses',
+          'Course Versions',
+          'Course Modules',
+          'Course Sections',
+          'Course Items',
+        ],
+      },
+      {
+        name: 'User Management',
+        tags: ['User Enrollments', 'User Progress'],
+      },
+      {
+        name: 'Data Models',
+        tags: ['Models'],
+      },
+    ],
     components: {
       schemas,
       securitySchemes: {
@@ -98,7 +179,9 @@ if (outputToStdout) {
     fs.mkdirSync(outputDir, {recursive: true});
   }
 
-  const outputPath = path.join(outputDir, 'openapi.json');
+  console.log(`Output directory: ${outputFile}`);
+  const outputPath = path.join(outputDir, outputFile || 'openapi.json');
+  console.log(`Writing OpenAPI specification to: ${outputPath}`);
   try {
     fs.writeFileSync(outputPath, JSON.stringify(openApiSpec, null, 2));
     console.log(`✨ OpenAPI specification generated at: ${outputPath}`);

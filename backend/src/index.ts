@@ -72,7 +72,7 @@ export const ServiceFactory = (
       });
 
       // Call the handler to render the documentation
-      handler(req, res);
+      handler(req as any, res as any);
     } catch (error) {
       console.error('Error serving API documentation:', error);
       res

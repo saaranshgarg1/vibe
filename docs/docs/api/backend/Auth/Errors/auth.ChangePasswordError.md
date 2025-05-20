@@ -1,4 +1,4 @@
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:28](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L28)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:28](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L28)
 
 Custom error thrown during password change operations.
 
@@ -12,7 +12,7 @@ Custom error thrown during password change operations.
 
 > **new ChangePasswordError**(`message`): `ChangePasswordError`
 
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:34](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L34)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:34](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L34)
 
 Creates a new ChangePasswordError instance.
 
@@ -38,7 +38,7 @@ The error message describing what went wrong
 
 > `optional` **cause**: `unknown`
 
-Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/lib.es2022.error.d.ts:24
+Defined in: node\_modules/.pnpm/typescript@5.8.3/node\_modules/typescript/lib/lib.es2022.error.d.ts:26
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/li
 
 > **message**: `string`
 
-Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/lib.es5.d.ts:1077
+Defined in: node\_modules/.pnpm/typescript@5.8.3/node\_modules/typescript/lib/lib.es5.d.ts:1077
 
 #### Inherited from
 
@@ -62,7 +62,7 @@ Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/li
 
 > **name**: `string`
 
-Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/lib.es5.d.ts:1076
+Defined in: node\_modules/.pnpm/typescript@5.8.3/node\_modules/typescript/lib/lib.es5.d.ts:1076
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/li
 
 > `optional` **stack**: `string`
 
-Defined in: node\_modules/.pnpm/typescript@5.6.3/node\_modules/typescript/lib/lib.es5.d.ts:1078
+Defined in: node\_modules/.pnpm/typescript@5.8.3/node\_modules/typescript/lib/lib.es5.d.ts:1078
 
 #### Inherited from
 

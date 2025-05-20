@@ -1,4 +1,4 @@
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:48](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L48)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:48](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L48)
 
 Service that implements authentication functionality using Firebase Auth.
 Handles user registration, token verification, and password management.
@@ -15,7 +15,7 @@ Handles user registration, token verification, and password management.
 
 > **new FirebaseAuthService**(`userRepository`): `FirebaseAuthService`
 
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:60](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L60)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:60](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L60)
 
 Creates a new Firebase authentication service instance.
 Initializes Firebase Admin SDK with application default credentials.
@@ -38,7 +38,7 @@ Repository for storing and retrieving user data
 
 > **changePassword**(`body`, `requestUser`): `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
 
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:150](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L150)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:150](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L150)
 
 Changes a user's password in Firebase Auth.
 Verifies that passwords match and the user exists before making changes.
@@ -47,7 +47,7 @@ Verifies that passwords match and the user exists before making changes.
 
 ##### body
 
-[`ChangePasswordBody`](../../Other/auth.ChangePasswordBody.md)
+[`ChangePasswordBody`](../Validators/auth.ChangePasswordBody.md)
 
 Contains the new password and confirmation
 
@@ -77,7 +77,7 @@ ChangePasswordError - If passwords don't match or user doesn't exist
 
 > **signup**(`body`): `Promise`\<`IUser`\>
 
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:105](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L105)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:105](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L105)
 
 Registers a new user with Firebase Auth and stores user data in the repository.
 
@@ -85,7 +85,7 @@ Registers a new user with Firebase Auth and stores user data in the repository.
 
 ##### body
 
-[`SignUpBody`](../../Other/auth.SignUpBody.md)
+[`SignUpBody`](../Validators/auth.SignUpBody.md)
 
 The validated signup information including email, password, and name
 
@@ -109,7 +109,7 @@ Error - If user creation fails in either Firebase or the repository
 
 > **verifyToken**(`token`): `Promise`\<`IUser`\>
 
-Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:76](https://github.com/saaranshgarg1/vibe/blob/92f3eed6f8b269ad4e4d39a2fa93008a887aa76f/backend/src/modules/auth/services/FirebaseAuthService.ts#L76)
+Defined in: [backend/src/modules/auth/services/FirebaseAuthService.ts:76](https://github.com/continuousactivelearning/vibe/blob/2acbe3b478970855555eb5e714d2dc1713e5937b/backend/src/modules/auth/services/FirebaseAuthService.ts#L76)
 
 Verifies a Firebase authentication token and returns the associated user.
 

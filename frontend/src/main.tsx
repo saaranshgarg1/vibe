@@ -1,14 +1,25 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { Provider } from "react-redux";
-import { store } from "@/app/store";
-import AppRoutes from "@/routes"; // ✅ Use AppRoutes
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "@/routes/router";
 import "@/styles/globals.css";
+import { initAuth } from "@/lib/api/auth";
+
+// App wrapper to handle auth initialization
+function App() {
+  useEffect(() => {
+    // Setup auth listener
+    const unsubscribe = initAuth();
+    
+    // Cleanup on unmount
+    return () => unsubscribe();
+  }, []);
+  
+  return <RouterProvider router={router} />;
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Provider store={store}>  {/* ✅ Wrap with Redux Provider */}
-      <AppRoutes />  {/* ✅ Use new modular routes */}
-    </Provider>
+    <App />
   </StrictMode>
 );

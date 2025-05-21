@@ -1,13 +1,15 @@
 "use client"
 
 import {
-  BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
+  User,
+  Settings,
 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { logout } from "@/lib/firebase"
 
 import {
   Avatar,
@@ -34,12 +36,32 @@ export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
+    name?: string;
+    email: string;
+    avatar?: string;
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+  const navigate = useNavigate();
+  const clearUser = useAuthStore((state) => state.clearUser);
+
+  const handleLogout = () => {
+    // Call Firebase logout
+    logout();
+    // Clear user from store
+    clearUser();
+    // Navigate to auth page
+    navigate({ to: "/auth" });
+  };
+
+  const getInitials = (name: string = 'User'): string => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <SidebarMenu>
@@ -52,10 +74,12 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {getInitials(user.name)}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate font-semibold">{user.name || user.email}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -71,39 +95,34 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold">{user.name || user.email}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/profile"})}>
+                <User className="mr-2 h-4 w-4" />
+                My Profile
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/settings" })}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/notifications" })}>
+                <Bell className="mr-2 h-4 w-4" />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -1,174 +1,205 @@
 "use client"
 
 import * as React from "react"
+import { Link, useMatches } from "@tanstack/react-router"
 import {
-  AudioWaveform,
   BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
+  FileText,
+  LayoutDashboard,
+  PlusCircle,
+  GraduationCap,
+  Users,
+  BookOpenCheck,
+  Clock,
+  ListTodo,
+  ChevronRight
 } from "lucide-react"
 
-import { NavMain } from "./nav-main"
-import { NavProjects } from "./nav-projects"
 import { NavUser } from "./nav-user"
-import { TeamSwitcher } from "./team-switcher"
+import { User } from "@/lib/store/auth-store"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent
 } from "@/components/ui/sidebar"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+export function AppSidebar({ user }: { user: User | null }) {
+  const matches = useMatches();
+  const currentPath = matches.length ? matches[matches.length - 1].pathname : "";
+  
+  // Navigation items for teachers
+  const navItems = [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      title: "Dashboard",
+      icon: LayoutDashboard,
+      url: "/teacher",
+      isActive: currentPath === "/teacher",
     },
     {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
+      title: "Courses",
       icon: BookOpen,
+      url: "#",
+      isActive: currentPath.includes("/teacher/courses"),
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "All Courses",
+          url: "/teacher/courses",
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: "Create Course",
+          url: "/teacher/courses/create",
         },
         {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
+          title: "Create Article",
+          url: "/teacher/courses/articles/create",
         },
       ],
     },
     {
-      title: "Settings",
+      title: "Content",
+      icon: FileText,
       url: "#",
-      icon: Settings2,
+      isActive: currentPath.includes("/teacher/content"),
       items: [
         {
-          title: "General",
-          url: "#",
+          title: "Articles",
+          url: "/teacher/content/articles",
         },
         {
-          title: "Team",
-          url: "#",
+          title: "Assignments",
+          url: "/teacher/content/assignments",
         },
         {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Quizzes",
+          url: "/teacher/content/quizzes",
         },
       ],
     },
-  ],
-  projects: [
     {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
+      title: "Students",
+      icon: Users,
+      url: "/teacher/students",
+      isActive: currentPath.includes("/teacher/students"),
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
+      title: "Assessments",
+      icon: BookOpenCheck,
+      url: "/teacher/assessments",
+      isActive: currentPath.includes("/teacher/assessments"),
     },
     {
-      name: "Travel",
-      url: "#",
-      icon: Map,
+      title: "Schedule",
+      icon: Clock,
+      url: "/teacher/schedule",
+      isActive: currentPath.includes("/teacher/schedule"),
     },
-  ],
-}
+    {
+      title: "Testing",
+      icon: ListTodo,
+      url: "/teacher/testing",
+      isActive: currentPath.includes("/teacher/testing"),
+    },
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Format user data for NavUser component
+  const userData = {
+    name: user?.name || "Teacher",
+    email: user?.email || "teacher@example.com",
+    avatar: user?.avatar || "",
+  };
+
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <div className="flex items-center h-14 px-4">
+          <Link to="/teacher" className="flex items-center font-semibold text-lg">
+            <GraduationCap className="h-6 w-6 mr-2" />
+            <span className="font-bold">Vibe LMS</span>
+          </Link>
+        </div>
       </SidebarHeader>
+      
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <SidebarMenu>
+          {navItems.map((item, index) => (
+            <SidebarMenuItem key={index}>
+              {item.items ? (
+                <Collapsible asChild defaultOpen={item.isActive} className="group/collapsible">
+                  <div className="w-full"> {/* Use div instead of SidebarMenuItem to avoid nested <li> */}
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title} isActive={item.isActive}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items.map((subItem, subIndex) => (
+                          <SidebarMenuSubItem key={subIndex}>
+                            <SidebarMenuSubButton 
+                              asChild 
+                              isActive={currentPath === subItem.url}
+                            >
+                              <Link to={subItem.url}>
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              ) : (
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={item.isActive}
+                  className="w-full"
+                >
+                  <Link to={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              )}
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+        
+        <div className="mt-6">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                asChild
+                variant="outline"
+                className="w-full"
+              >
+                <Link to="/teacher/courses/create">
+                  <PlusCircle className="size-4" />
+                  <span>Create New Course</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarContent>
+      
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
+      
       <SidebarRail />
     </Sidebar>
   )

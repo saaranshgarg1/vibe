@@ -1,14 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "@/pages/auth-page";
 import teacherRoutes from "./teacher-routes";
-import { useSelector } from "react-redux";
-import { RootState } from "@/app/store";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { JSX } from "react";
 import React from "react";
 
-// ✅ Role-Based Route Guard
+// ✅ Role-Based Route Guard using Zustand
 function ProtectedRoute({ role, children }: { role: "teacher" | "student"; children: JSX.Element }) {
-    const user = useSelector((state: RootState) => state.auth.user);
+    const user = useAuthStore(state => state.user);
 
     if (!user) return <Navigate to="/auth" replace />;
     if (user.role !== role) return <Navigate to="/auth" replace />;

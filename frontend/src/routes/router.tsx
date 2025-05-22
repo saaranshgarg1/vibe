@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Router, 
   Route, 
@@ -17,24 +16,7 @@ import Dashboard from '@/pages/teacher/dashboard'
 import CreateCourse from '@/pages/teacher/create-course'
 import Editor from '@/pages/teacher/create-article'
 import FaceDetectors from '@/pages/testing-proctoring/face-detectors'
-
-// Not Found Component
-const NotFoundComponent = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center p-8 bg-gray-50 rounded-lg shadow-lg max-w-md">
-        <h1 className="text-3xl font-bold mb-4">Page Not Found</h1>
-        <p className="text-gray-600 mb-6">The page you're looking for doesn't exist or has been moved.</p>
-        <button 
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => window.location.href = '/'}
-        >
-          Go to Home
-        </button>
-      </div>
-    </div>
-  );
-};
+import { NotFoundComponent } from '@/components/not-found'
 
 // Root route with error and notFound handling
 const rootRoute = new RootRoute({
@@ -88,7 +70,7 @@ const indexRoute = new Route({
         })
       } else {
         throw redirect({
-          to: '/student',
+          to: '/auth',
         })
       }
     } else {
@@ -121,11 +103,7 @@ const teacherLayoutRoute = new Route({
       })
     }
   },
-  component: () => (
-    <TeacherLayout>
-      <Outlet />
-    </TeacherLayout>
-  ),
+  component: TeacherLayout,
 });
 
 // Teacher dashboard route

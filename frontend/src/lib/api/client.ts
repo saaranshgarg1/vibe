@@ -27,22 +27,53 @@ export const getAuthToken = (): string | null => {
   return token;
 };
 
+// Helper to set auth token
+export const setAuthToken = (token: string | null): void => {
+  if (token) {
+    localStorage.setItem('auth-token', token);
+  } else {
+    localStorage.removeItem('auth-token');
+  }
+};
+
+// Define a type for options that may have headers
+type RequestOptions = {
+  headers?: Record<string, string>;
+  [key: string]: unknown;
+};
+
+// Helper to add auth headers to requests
+export const withAuth = <T extends RequestOptions>(options: T): T => {
+  const token = getAuthToken();
+  if (token) {
+    return {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  }
+  return options;
+};
+
 // Add auth token to requests
 apiClient.use({
-  async onRequest(request) {
+  onRequest(req) {
     const token = getAuthToken();
-    if (token) {
-      request.headers.set('Authorization', `Bearer ${token}`);
+    if (token && req instanceof Request) {
+      req.headers.set('Authorization', `Bearer ${token}`);
+      return req; // Return the modified Request object
     }
-    return request;
+    return undefined; // Return undefined if we can't modify the request
   },
-  async onResponse(response) {
+  onResponse(res) {
     // Handle 401 Unauthorized responses
-    if (response.status === 401) {
+    if (res.response.status === 401) {
       // Clear auth token and redirect to login
       localStorage.removeItem('auth-token');
       window.location.href = '/auth';
     }
-    return response;
+    return res.response;
   }
 });

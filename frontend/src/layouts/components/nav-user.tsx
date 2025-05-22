@@ -107,15 +107,15 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/profile"})}>
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher" })}>
                 <User className="mr-2 h-4 w-4" />
                 My Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/settings" })}>
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher" })}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/teacher/notifications" })}>
+              <DropdownMenuItem onClick={() => navigate({ to: "/teacher" })}>
                 <Bell className="mr-2 h-4 w-4" />
                 Notifications
               </DropdownMenuItem>

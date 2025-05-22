@@ -83,8 +83,8 @@ export default function TeacherLayout() {
                         {item.isCurrentPage ? (
                           <BreadcrumbPage>{item.label}</BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink as={Link} to={item.path}>
-                            {item.label}
+                          <BreadcrumbLink href={item.path} asChild>
+                            <Link to={item.path}>{item.label}</Link>
                           </BreadcrumbLink>
                         )}
                       </BreadcrumbItem>

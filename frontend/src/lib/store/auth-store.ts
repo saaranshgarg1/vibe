@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiClient } from '../api/client';
 
 export type User = {
   uid: string;
@@ -42,12 +41,9 @@ export const useAuthStore = create<AuthStore>()(
 );
 
 // Subscribe to store changes to update the auth header in API client
-useAuthStore.subscribe(
-  (state) => state.token,
-  (token) => {
-    if (token) {
-      // Set token for API client (if needed beyond localStorage)
-      console.log('Auth token updated in store');
-    }
+useAuthStore.subscribe((state) => {
+  if (state.token) {
+    // Set token for API client (if needed beyond localStorage)
+    console.log('Auth token updated in store');
   }
-);
+});

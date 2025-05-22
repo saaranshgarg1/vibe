@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, setAuthToken, withAuth } from './client';
-import { paths } from './schema';
+import { setAuthToken } from './client';
+import { components } from './schema';
 
 type LoginCredentials = {
   email: string;
@@ -13,24 +13,29 @@ export function useLogin() {
   
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const { data, error } = await api.POST('/api/auth/login', {
-        body: credentials,
+      const response = await fetch(`${window.location.origin}/api/auth/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
       });
       
-      if (error) {
-        throw new Error(error.message || 'Login failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Login failed');
       }
       
-      if (!data) {
-        throw new Error('Login failed: No data returned');
-      }
+      const data = await response.json();
       
       // Set auth token for subsequent requests
-      setAuthToken(data.token);
+      if (data.token) {
+        setAuthToken(data.token);
+      }
       
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate queries that might depend on auth state
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
@@ -54,18 +59,25 @@ export function useLogout() {
   });
 }
 
-// Example queries with authentication
+// Courses query with authentication
 export function useCourses() {
   return useQuery({
     queryKey: ['courses'],
     queryFn: async () => {
-      const { data, error } = await api.GET('/api/courses', withAuth({}));
+      const response = await fetch(`${window.location.origin}/api/courses`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+        },
+      });
       
-      if (error) {
-        throw new Error(error.message || 'Failed to fetch courses');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch courses');
       }
       
-      return data;
+      return response.json();
     },
   });
 }
@@ -74,28 +86,60 @@ export function useUserProfile() {
   return useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      const { data, error } = await api.GET('/api/users/me', withAuth({}));
+      const response = await fetch(`${window.location.origin}/api/users/me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+        },
+      });
       
-      if (error) {
-        throw new Error(error.message || 'Failed to fetch user profile');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch user profile');
       }
       
-      return data;
+      return response.json();
     },
   });
 }
 
-// Extend with more hooks as needed according to your API spec
-// For example:
-/*
-export function useCourses() {
-  return useQuery({
-    queryKey: ['courses'],
-    queryFn: async () => {
-      const { data, error } = await api.GET('/api/courses');
-      if (error) throw new Error(error.message || 'Failed to fetch courses');
+// Course hooks
+export function useCreateCourse() {
+  const queryClient = useQueryClient();
+  
+  return useMutation<
+    components['schemas']['CourseDataResponse'], 
+    Error, 
+    components['schemas']['CreateCourseBody']
+  >({
+    mutationFn: async (courseData) => {
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch(`${window.location.origin}/api/courses/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify(courseData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create course');
+      }
+      
+      const data = await response.json();
+      
+      if (!data) {
+        throw new Error('No data returned from course creation');
+      }
+      
       return data;
     },
+    onSuccess: () => {
+      // Invalidate courses query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    }
   });
 }
-*/ 

@@ -56,3 +56,5 @@ node_modules/
 .vibe.json
 
 .venv
+
+/mcp

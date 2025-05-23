@@ -23,17 +23,16 @@ import {
   CreateCourseVersionBody,
   ReadCourseVersionParams,
   DeleteCourseVersionParams,
+  CourseVersionDataResponse,
+  CourseVersionNotFoundErrorResponse,
+  CreateCourseVersionResponse,
 } from '../classes/validators/CourseVersionValidators';
+import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
+import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
-/**
- * Controller for handling course version operations like creation and retrieval.
- * All routes are prefixed with `/courses`.
- *
- * @category Courses/Controllers
- * @categoryDescription
- * Manages creation of new course versions and retrieval of version details.
- * Only authorized users (admin/instructor/student) may access relevant endpoints.
- */
+@OpenAPI({
+  tags: ['Course Versions'],
+})
 @JsonController('/courses')
 @Service()
 export class CourseVersionController {
@@ -41,29 +40,30 @@ export class CourseVersionController {
     @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {}
 
-  /**
-   * Create a new version for a specific course.
-   *
-   * @param params - Parameters including the course ID (`:id`)
-   * @param body - Payload containing version name and description
-   * @returns The updated course and the newly created version
-   *
-   * @throws HttpError(404) if the course is not found
-   * @throws HttpError(500) on any other internal error
-   *
-   * @category Courses/Controllers
-   */
   @Authorized(['admin', 'instructor'])
   @Post('/:id/versions')
   @HttpCode(201)
+  @ResponseSchema(CreateCourseVersionResponse, {
+    description: 'Course version created successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(CourseVersionNotFoundErrorResponse, {
+    description: 'Course not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Create Course Version',
+    description: 'Creates a new version for a specific course.',
+  })
   async create(
     @Params() params: CreateCourseVersionParams,
     @Body() body: CreateCourseVersionBody,
   ) {
     const {id} = params;
     try {
-      // console.log("id", id);
-      // console.log("payload", payload);
       //Fetch Course from DB
       const course = await this.courseRepo.read(id);
 
@@ -94,19 +94,23 @@ export class CourseVersionController {
     }
   }
 
-  /**
-   * Retrieve a course version by its ID.
-   *
-   * @param params - Parameters including version ID (`:id`)
-   * @returns The course version object if found
-   *
-   * @throws HttpError(404) if the version is not found
-   * @throws HttpError(500) for read errors
-   *
-   * @category Courses/Controllers
-   */
   @Authorized(['admin', 'instructor', 'student'])
   @Get('/versions/:id')
+  @ResponseSchema(CourseVersionDataResponse, {
+    description: 'Course version retrieved successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(CourseVersionNotFoundErrorResponse, {
+    description: 'Course version not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Get Course Version',
+    description: 'Retrieves a course version by its ID.',
+  })
   async read(@Params() params: ReadCourseVersionParams) {
     const {id} = params;
     try {
@@ -122,20 +126,24 @@ export class CourseVersionController {
       throw new HttpError(500, error.message);
     }
   }
-  /**
-   * Delete the course version by its ID
-   *
-   * @params params - Parameters including the courseID and version ID.
-   * @returns The deleted course version object.
-   *
-   * @throws HttpError(404) if the course or version is not found.
-   * @throws HttpError(500) on any other internal server errors.
-   *
-   * @category Courses/Controllers
-   */
 
   @Authorized(['admin', 'instructor'])
   @Delete('/:courseId/versions/:versionId')
+  @ResponseSchema(DeleteCourseVersionParams, {
+    description: 'Course version deleted successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(CourseVersionNotFoundErrorResponse, {
+    description: 'Course or version not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Delete Course Version',
+    description: 'Deletes a course version by its ID.',
+  })
   async delete(@Params() params: DeleteCourseVersionParams) {
     const {courseId, versionId} = params;
     if (!versionId || !courseId) {

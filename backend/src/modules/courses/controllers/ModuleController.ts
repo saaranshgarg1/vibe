@@ -5,21 +5,17 @@ import {
   BadRequestError,
   Body,
   Delete,
+  HttpCode,
   HttpError,
   InternalServerError,
   JsonController,
+  NotFoundError,
   Params,
   Post,
   Put,
 } from 'routing-controllers';
 import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
-import {
-  DeleteError,
-  ItemNotFoundError,
-  ReadError,
-  UpdateError,
-} from 'shared/errors/errors';
-import {HTTPError} from 'shared/middleware/ErrorHandler';
+import {DeleteError, ReadError, UpdateError} from 'shared/errors/errors';
 import {Inject, Service} from 'typedi';
 import {Module} from '../classes/transformers/Module';
 import {
@@ -47,7 +43,7 @@ import {calculateNewOrder} from '../utils/calculateNewOrder';
 @Service()
 export class ModuleController {
   constructor(
-    @Inject('NewCourseRepo') private readonly courseRepo: CourseRepository,
+    @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {
     if (!this.courseRepo) {
       throw new Error('CourseRepository is not properly injected');
@@ -68,6 +64,7 @@ export class ModuleController {
 
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules')
+  @HttpCode(201)
   async create(
     @Params() params: CreateModuleParams,
     @Body() body: CreateModuleBody,
@@ -149,7 +146,7 @@ export class ModuleController {
       };
     } catch (error) {
       if (error instanceof ReadError) {
-        throw new HTTPError(404, error);
+        throw new HttpError(404, error.message);
       }
     }
   }
@@ -219,7 +216,7 @@ export class ModuleController {
       };
     } catch (error) {
       if (error instanceof Error) {
-        throw new HTTPError(500, error);
+        throw new HttpError(500, error.message);
       }
     }
   }
@@ -252,7 +249,7 @@ export class ModuleController {
         message: `Module with the ID ${moduleId} in Version ${versionId} has been deleted successfully.`,
       };
     } catch (error) {
-      if (error instanceof ItemNotFoundError) {
+      if (error instanceof NotFoundError) {
         throw new HttpError(404, error.message);
       }
       if (error instanceof DeleteError) {

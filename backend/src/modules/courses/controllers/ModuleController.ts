@@ -1,30 +1,31 @@
-import {instanceToPlain} from 'class-transformer';
 import 'reflect-metadata';
 import {
   Authorized,
-  BadRequestError,
+  JsonController,
+  Params,
   Body,
+  Post,
+  Put,
   Delete,
   HttpCode,
   HttpError,
+  BadRequestError,
   InternalServerError,
-  JsonController,
   NotFoundError,
-  Params,
-  Post,
-  Put,
 } from 'routing-controllers';
+import {Service, Inject} from 'typedi';
+import {instanceToPlain} from 'class-transformer';
 import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
-import {DeleteError, ReadError, UpdateError} from 'shared/errors/errors';
-import {Inject, Service} from 'typedi';
+import {ModuleService} from '../services/ModuleService';
 import {Module} from '../classes/transformers/Module';
+import {ReadError, UpdateError} from 'shared/errors/errors';
 import {
   CreateModuleParams,
   CreateModuleBody,
-  MoveModuleBody,
-  MoveModuleParams,
-  UpdateModuleBody,
   UpdateModuleParams,
+  UpdateModuleBody,
+  MoveModuleParams,
+  MoveModuleBody,
   DeleteModuleParams,
   ModuleDataResponse,
   ModuleNotFoundErrorResponse,
@@ -41,6 +42,8 @@ import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 @Service()
 export class ModuleController {
   constructor(
+    @Inject(() => ModuleService)
+    private service: ModuleService,
     @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {
     if (!this.courseRepo) {
@@ -124,40 +127,12 @@ export class ModuleController {
     @Params() params: UpdateModuleParams,
     @Body() body: UpdateModuleBody,
   ) {
-    try {
-      const {versionId, moduleId} = params;
-      //Fetch Version
-      const version = await this.courseRepo.readVersion(versionId);
-
-      //Find Module
-      const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
-
-      //Update Module
-      Object.assign(module, body.name ? {name: body.name} : {});
-      Object.assign(
-        module,
-        body.description ? {description: body.description} : {},
-      );
-      module.updatedAt = new Date();
-
-      //Update Version Update Date
-      version.updatedAt = new Date();
-
-      //Update Version
-      const updatedVersion = await this.courseRepo.updateVersion(
-        versionId,
-        version,
-      );
-
-      return {
-        version: instanceToPlain(updatedVersion),
-      };
-    } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
-    }
+    const updated = await this.service.updateModule(
+      params.versionId,
+      params.moduleId,
+      body,
+    );
+    return {version: instanceToPlain(updated)};
   }
 
   @Authorized(['admin'])
@@ -256,27 +231,9 @@ export class ModuleController {
     description: 'Permanently removes a module from a course version.',
   })
   async delete(@Params() params: DeleteModuleParams) {
-    const {versionId, moduleId} = params;
-    if (!versionId || !moduleId) {
-      throw new BadRequestError('Version ID and Module ID are required');
-    }
-    try {
-      const isDeleted = await this.courseRepo.deleteModule(versionId, moduleId);
-
-      if (!isDeleted) {
-        throw new DeleteError('Internal server error');
-      }
-      return {
-        message: `Module with the ID ${moduleId} in Version ${versionId} has been deleted successfully.`,
-      };
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new HttpError(404, error.message);
-      }
-      if (error instanceof DeleteError) {
-        throw new HttpError(500, error.message);
-      }
-      throw new HttpError(500, error.message);
-    }
+    await this.service.deleteModule(params.versionId, params.moduleId);
+    return {
+      message: `Module ${params.moduleId} deleted in version ${params.versionId}`,
+    };
   }
 }

@@ -14,6 +14,10 @@ import {
   InternalServerError,
 } from 'routing-controllers';
 import {Inject, Service} from 'typedi';
+import {instanceToPlain} from 'class-transformer';
+import {ObjectId} from 'mongodb';
+import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
+import {ReadError} from 'shared/errors/errors';
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {CourseVersionService} from '../services';
 import {
@@ -25,7 +29,6 @@ import {
   CourseVersionNotFoundErrorResponse,
   CreateCourseVersionResponse,
 } from '../classes/validators/CourseVersionValidators';
-import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 import {CourseVersion} from '../classes/transformers';
 
@@ -38,6 +41,7 @@ export class CourseVersionController {
   constructor(
     @Inject('CourseVersionService')
     private readonly courseVersionService: CourseVersionService,
+    @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {}
 
   @Authorized(['admin', 'instructor'])
@@ -82,7 +86,7 @@ export class CourseVersionController {
       return {
         course: instanceToPlain(updatedCourse),
         version: instanceToPlain(version),
-      };
+      } as any;
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new HttpError(404, error.message);
@@ -92,9 +96,6 @@ export class CourseVersionController {
       }
       throw new HttpError(500, error.message);
     }
-    const createdCourseVersion =
-      await this.courseVersionService.createCourseVersion(id, body);
-    return createdCourseVersion;
   }
 
   @Authorized(['admin', 'instructor', 'student'])

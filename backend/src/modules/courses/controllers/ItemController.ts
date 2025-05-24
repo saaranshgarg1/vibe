@@ -9,8 +9,16 @@ import {
   Delete,
   Params,
   HttpCode,
+  HttpError,
+  BadRequestError,
 } from 'routing-controllers';
 import {Service, Inject} from 'typedi';
+import {instanceToPlain, plainToInstance} from 'class-transformer';
+import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
+import {ItemRepository} from 'shared/database/providers/mongo/repositories/ItemRepository';
+import {ItemsGroup, Item} from '../classes/transformers/Item';
+import {DeleteError} from 'shared/errors/errors';
+import {ItemService} from '../services/ItemService';
 import {
   CreateItemBody,
   UpdateItemBody,
@@ -20,8 +28,12 @@ import {
   UpdateItemParams,
   MoveItemParams,
   DeleteItemParams,
+  ItemDataResponse,
+  ItemNotFoundErrorResponse,
+  DeletedItemResponse,
 } from '../classes/validators/ItemValidators';
-import {calculateNewOrder} from '../utils/calculateNewOrder';
+import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
+import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 
 /**
  * Controller for managing items within course modules and sections.
@@ -38,6 +50,8 @@ import {calculateNewOrder} from '../utils/calculateNewOrder';
 export class ItemController {
   constructor(
     @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
+    @Inject('ItemRepo') private readonly itemRepo: ItemRepository,
+    @Inject('ItemService') private readonly itemService: ItemService,
   ) {
     if (!this.courseRepo) {
       throw new Error('CourseRepository is not properly injected');
@@ -63,58 +77,13 @@ export class ItemController {
     @Params() params: CreateItemParams,
     @Body() body: CreateItemBody,
   ) {
-    try {
-      const {versionId, moduleId, sectionId} = params;
-      //Fetch Version
-      const version = await this.courseRepo.readVersion(versionId);
-
-      //Find Module
-      const module = version.modules.find(m => m.moduleId === moduleId);
-
-      //Find Section
-      const section = module.sections.find(s => s.sectionId === sectionId);
-
-      //Fetch ItemGroup
-      const itemsGroup = plainToInstance(
-        ItemsGroup,
-        await this.courseRepo.readItemsGroup(section.itemsGroupId.toString()),
-      );
-
-      //Create Item
-      const newItem = new Item(body, itemsGroup.items);
-
-      //Add Item to ItemsGroup
-      itemsGroup.items.push(newItem);
-
-      //Update Section Update Date
-      section.updatedAt = new Date();
-
-      //Update Module Update Date
-      module.updatedAt = new Date();
-
-      //Update Version Update Date
-      version.updatedAt = new Date();
-
-      const updatedItemsGroup = await this.courseRepo.updateItemsGroup(
-        section.itemsGroupId.toString(),
-        itemsGroup,
-      );
-
-      //Update Version
-      const updatedVersion = await this.courseRepo.updateVersion(
-        versionId,
-        version,
-      );
-
-      return {
-        itemsGroup: instanceToPlain(updatedItemsGroup),
-        version: instanceToPlain(updatedVersion),
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new HttpError(500, error.message);
-      }
-    }
+    const {versionId, moduleId, sectionId} = params;
+    return await this.itemService.createItem(
+      versionId,
+      moduleId,
+      sectionId,
+      body,
+    );
   }
 
   /**
@@ -159,7 +128,7 @@ export class ItemController {
       const section = module.sections.find(s => s.sectionId === sectionId);
 
       //Fetch Items
-      const itemsGroup = await this.courseRepo.readItemsGroup(
+      const itemsGroup = await this.itemRepo.readItemsGroup(
         section.itemsGroupId.toString(),
       );
 
@@ -209,75 +178,14 @@ export class ItemController {
     @Params() params: UpdateItemParams,
     @Body() body: UpdateItemBody,
   ) {
-    try {
-      const {versionId, moduleId, sectionId, itemId} = params;
-      //Fetch Version
-      const version = await this.courseRepo.readVersion(versionId);
-
-      //Find Module
-      const module = version.modules.find(m => m.moduleId === moduleId);
-
-      //Find Section
-      const section = module.sections.find(s => s.sectionId === sectionId);
-
-      //Fetch ItemsGroup
-      const itemsGroup = await this.courseRepo.readItemsGroup(
-        section.itemsGroupId.toString(),
-      );
-
-      //Find Item
-      const item = itemsGroup.items.find(i => i.itemId === itemId);
-
-      //Update Item
-      Object.assign(item, body.name ? {name: body.name} : {});
-      Object.assign(
-        item,
-        body.description ? {description: body.description} : {},
-      );
-      Object.assign(item, body.type ? {type: body.type} : {});
-
-      //Update Item Details
-      Object.assign(
-        item,
-        body.videoDetails
-          ? {itemDetails: body.videoDetails}
-          : body.blogDetails
-            ? {itemDetails: body.blogDetails}
-            : body.quizDetails
-              ? {itemDetails: body.quizDetails}
-              : {},
-      );
-
-      //Update Section Update Date
-      section.updatedAt = new Date();
-
-      //Update Module Update Date
-      module.updatedAt = new Date();
-
-      //Update Version Update Date
-      version.updatedAt = new Date();
-
-      //Update ItemsGroup
-      const updatedItemsGroup = await this.courseRepo.updateItemsGroup(
-        section.itemsGroupId.toString(),
-        itemsGroup,
-      );
-
-      //Update Version
-      const updatedVersion = await this.courseRepo.updateVersion(
-        versionId,
-        version,
-      );
-
-      return {
-        itemsGroup: instanceToPlain(updatedItemsGroup),
-        version: instanceToPlain(updatedVersion),
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new HttpError(500, error.message);
-      }
-    }
+    const {versionId, moduleId, sectionId, itemId} = params;
+    return await this.itemService.updateItem(
+      versionId,
+      moduleId,
+      sectionId,
+      itemId,
+      body,
+    );
   }
 
   /**
@@ -314,7 +222,7 @@ export class ItemController {
       }
 
       //Fetch ItemsGroup
-      const itemsGroup = await this.courseRepo.readItemsGroup(itemsGroupId);
+      const itemsGroup = await this.itemRepo.readItemsGroup(itemsGroupId);
       if (!itemsGroup) {
         throw new DeleteError('ItemsGroup not found');
       }
@@ -327,7 +235,7 @@ export class ItemController {
         throw new DeleteError('Item not found');
       }
 
-      const deletionStatus = await this.courseRepo.deleteItem(
+      const deletionStatus = await this.itemRepo.deleteItem(
         itemsGroupId,
         itemId,
       );
@@ -337,7 +245,7 @@ export class ItemController {
       }
 
       const updatedItemsGroup =
-        await this.courseRepo.readItemsGroup(itemsGroupId);
+        await this.itemRepo.readItemsGroup(itemsGroupId);
 
       return {
         deletedItem: instanceToPlain(itemToDelete),

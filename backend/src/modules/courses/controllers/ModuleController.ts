@@ -8,10 +8,17 @@ import {
   Put,
   Delete,
   HttpCode,
+  HttpError,
+  BadRequestError,
+  InternalServerError,
+  NotFoundError,
 } from 'routing-controllers';
 import {Service, Inject} from 'typedi';
 import {instanceToPlain} from 'class-transformer';
+import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
 import {ModuleService} from '../services/ModuleService';
+import {Module} from '../classes/transformers/Module';
+import {ReadError, UpdateError} from 'shared/errors/errors';
 import {
   CreateModuleParams,
   CreateModuleBody,
@@ -37,6 +44,7 @@ export class ModuleController {
   constructor(
     @Inject(() => ModuleService)
     private service: ModuleService,
+    @Inject('CourseRepo') private readonly courseRepo: CourseRepository,
   ) {}
 
   @Authorized(['admin'])
@@ -91,8 +99,6 @@ export class ModuleController {
       }
       throw new InternalServerError(error.message);
     }
-    const updated = await this.service.createModule(params.versionId, body);
-    return {version: instanceToPlain(updated)};
   }
 
   @Authorized(['admin'])
@@ -201,12 +207,6 @@ export class ModuleController {
         throw new HttpError(500, error.message);
       }
     }
-    const updated = await this.service.moveModule(
-      params.versionId,
-      params.moduleId,
-      body,
-    );
-    return {version: instanceToPlain(updated)};
   }
 
   @Authorized(['admin'])

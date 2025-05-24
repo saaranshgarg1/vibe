@@ -7,12 +7,12 @@ import {
   Authorized,
 } from 'routing-controllers';
 import {Inject, Service} from 'typedi';
+import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {
   Enrollment,
   EnrollUserResponse,
   Progress,
 } from '../classes/transformers';
-import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
 import {
   EnrollmentParams,
@@ -26,9 +26,16 @@ import {EnrollmentService} from '../services';
 })
 @JsonController('/users', {transformResponse: true})
 @Service()
+/**
+ * Controller for managing student enrollments in courses.
+ *
+ * @category Users/Controllers
+ */
 @OpenAPI({
   tags: ['User Enrollments'],
 })
+@JsonController('/users', {transformResponse: true})
+@Service()
 export class EnrollmentController {
   constructor(
     @Inject('EnrollmentService')
@@ -40,11 +47,10 @@ export class EnrollmentController {
   @HttpCode(200)
   @OpenAPI({
     summary: 'Enroll User in Course',
-    description:
-      'Enrolls a user in a specific course version and initializes their progress.',
+    description: 'Enrolls a user in a specific version of a course.',
   })
   @ResponseSchema(EnrollUserResponseData, {
-    description: 'User enrolled successfully',
+    description: 'User successfully enrolled in the course',
   })
   @ResponseSchema(BadRequestErrorResponse, {
     description: 'Bad Request Error',

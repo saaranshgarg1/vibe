@@ -70,35 +70,8 @@ export class ModuleController {
     @Params() params: CreateModuleParams,
     @Body() body: CreateModuleBody,
   ) {
-    try {
-      const {versionId} = params;
-      //Fetch Version
-      const version = await this.courseRepo.readVersion(versionId);
-
-      //Create Module
-      const module = new Module(body, version.modules);
-
-      //Add Module to Version
-      version.modules.push(module);
-
-      //Update Date
-      version.updatedAt = new Date();
-
-      //Update Version
-      const updatedVersion = await this.courseRepo.updateVersion(
-        params.versionId,
-        version,
-      );
-
-      return {
-        version: instanceToPlain(updatedVersion),
-      };
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new HttpError(404, error.message);
-      }
-      throw new InternalServerError(error.message);
-    }
+    const updated = await this.service.createModule(params.versionId, body);
+    return {version: instanceToPlain(updated)};
   }
 
   @Authorized(['admin'])
@@ -150,63 +123,12 @@ export class ModuleController {
       'Reorders a module within its course version by placing it before or after another module.',
   })
   async move(@Params() params: MoveModuleParams, @Body() body: MoveModuleBody) {
-    const {versionId, moduleId} = params;
-    try {
-      const {afterModuleId, beforeModuleId} = body;
-
-      if (!afterModuleId && !beforeModuleId) {
-        throw new UpdateError(
-          'Either afterModuleId or beforeModuleId is required',
-        );
-      }
-
-      //Fetch Version
-      const version = await this.courseRepo.readVersion(versionId);
-
-      //Sort Modules based on order
-      const sortedModules = version.modules.sort((a, b) =>
-        a.order.localeCompare(b.order),
-      );
-
-      //Find Module
-      const module = version.modules.find(m => m.moduleId === moduleId);
-      if (!module) throw new ReadError('Module not found');
-
-      //Calculate New Order
-      const newOrder = calculateNewOrder(
-        sortedModules,
-        'moduleId',
-        afterModuleId,
-        beforeModuleId,
-      );
-
-      //Update Module Order
-      module.order = newOrder;
-      module.updatedAt = new Date();
-
-      //Update Version Update Date
-      version.updatedAt = new Date();
-
-      //Update Version
-      const updatedVersion = await this.courseRepo.updateVersion(
-        versionId,
-        version,
-      );
-
-      return {
-        version: instanceToPlain(updatedVersion),
-      };
-    } catch (error) {
-      if (error instanceof ReadError) {
-        throw new HttpError(404, error.message);
-      }
-      if (error instanceof UpdateError) {
-        throw new BadRequestError(error.message);
-      }
-      if (error instanceof Error) {
-        throw new HttpError(500, error.message);
-      }
-    }
+    const updated = await this.service.moveModule(
+      params.versionId,
+      params.moduleId,
+      body,
+    );
+    return {version: instanceToPlain(updated)};
   }
 
   @Authorized(['admin'])

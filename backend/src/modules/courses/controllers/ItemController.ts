@@ -28,23 +28,18 @@ import {
   UpdateItemParams,
   MoveItemParams,
   DeleteItemParams,
-  ItemDataResponse,
-  ItemNotFoundErrorResponse,
   DeletedItemResponse,
 } from '../classes/validators/ItemValidators';
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {BadRequestErrorResponse} from 'shared/middleware/errorHandler';
+import {
+  ItemDataResponse,
+  ItemNotFoundErrorResponse,
+} from '../classes/validators/ItemValidators';
 
-/**
- * Controller for managing items within course modules and sections.
- * Handles operations such as creation, retrieval, update, and reordering.
- *
- * @category Courses/Controllers
- * @categoryDescription
- * Provides endpoints for working with "items" inside sections of modules
- * within course versions. This includes content like videos, blogs, or quizzes.
- */
-
+@OpenAPI({
+  tags: ['Items'],
+})
 @JsonController('/courses')
 @Service()
 export class ItemController {
@@ -73,6 +68,26 @@ export class ItemController {
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules/:moduleId/sections/:sectionId/items')
   @HttpCode(201)
+  @OpenAPI({
+    summary: 'Create Item',
+    description: 'Creates a new item within a section.',
+  })
+  @ResponseSchema(ItemDataResponse, {
+    description: 'Item created successfully',
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'Bad Request Error',
+    statusCode: 400,
+  })
+  @ResponseSchema(ItemNotFoundErrorResponse, {
+    description: 'Item not found',
+    statusCode: 404,
+  })
+  @OpenAPI({
+    summary: 'Create Item',
+    description:
+      'Creates a new item in the specified section with the provided details.',
+  })
   async create(
     @Params() params: CreateItemParams,
     @Body() body: CreateItemBody,
@@ -140,6 +155,8 @@ export class ItemController {
         throw new HttpError(500, error.message);
       }
     }
+    const {versionId, moduleId, sectionId} = params;
+    return await this.itemService.readAllItems(versionId, moduleId, sectionId);
   }
 
   /**
@@ -262,6 +279,8 @@ export class ItemController {
         throw new HttpError(500, error.message);
       }
     }
+    const {itemsGroupId, itemId} = params;
+    return await this.itemService.deleteItem(itemsGroupId, itemId);
   }
 
   /**

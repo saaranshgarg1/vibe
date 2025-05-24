@@ -96,6 +96,9 @@ export class CourseVersionController {
       }
       throw new HttpError(500, error.message);
     }
+    const createdCourseVersion =
+      await this.courseVersionService.createCourseVersion(id, body);
+    return createdCourseVersion;
   }
 
   @Authorized(['admin', 'instructor', 'student'])

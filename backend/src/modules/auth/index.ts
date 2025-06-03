@@ -18,11 +18,11 @@ import {IAuthService} from './interfaces/IAuthService';
 import {FirebaseAuthService} from './services/FirebaseAuthService';
 
 import {dbConfig} from '../../config/db';
-import {IDatabase, IUserRepository} from 'shared/database';
+import {IDatabase, IUserRepository} from '../../shared/database';
 import {
   MongoDatabase,
   UserRepository,
-} from 'shared/database/providers/MongoDatabaseProvider';
+} from '../../shared/database/providers/MongoDatabaseProvider';
 
 useContainer(Container);
 
@@ -74,6 +74,19 @@ export const authModuleOptions: RoutingControllersOptions = {
     //   return false;
     // }
     return true; // For now, allow all requests
+  },
+  currentUserChecker: async (action: Action) => {
+    // Use the auth service to get the current user
+    const authService = Container.get<IAuthService>('AuthService');
+    const token = action.request.headers['authorization']?.split(' ')[1];
+    if (!token) {
+      return null;
+    }
+    try {
+      return await authService.verifyToken(token);
+    } catch (error) {
+      return null;
+    }
   },
 };
 

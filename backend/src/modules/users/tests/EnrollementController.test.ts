@@ -1,4 +1,3 @@
-import {MongoMemoryServer} from 'mongodb-memory-server';
 import request from 'supertest';
 import Express from 'express';
 import {RoutingControllersOptions, useExpressServer} from 'routing-controllers';
@@ -8,7 +7,7 @@ import {
   authModuleOptions,
   setupAuthModuleDependencies,
   SignUpBody,
-} from 'modules/auth';
+} from '../../auth';
 import {
   Course,
   coursesModuleOptions,
@@ -21,15 +20,15 @@ import {
   CreateSectionBody,
   CreateSectionParams,
   setupCoursesModuleDependencies,
-} from 'modules/courses';
+} from '../../courses';
 import {
   EnrollmentParams,
   setupUsersModuleDependencies,
   usersModuleOptions,
 } from '..';
-import {faker} from '@faker-js/faker/.';
-import c from 'config';
+import {faker} from '@faker-js/faker';
 import {dbConfig} from '../../../config/db';
+
 jest.setTimeout(90000);
 describe('Enrollment Controller Integration Tests', () => {
   const appInstance = Express();
@@ -213,16 +212,17 @@ describe('Enrollment Controller Integration Tests', () => {
 
       const itemId = createItemResponse.body.itemsGroup.items[0]._id;
 
-      // 3. Enroll the user in the course version by hitting at endpoint
+      // 3. Enroll the user as a student in the course version by hitting at endpoint
 
       const createEnrollmentParams: EnrollmentParams = {
         userId: userId,
         courseId: courseId,
         courseVersionId: courseVersionId,
+        role: 'student',
       };
 
       const enrollmentResponse = await request(app).post(
-        `/users/${createEnrollmentParams.userId}/enrollments/courses/${createEnrollmentParams.courseId}/versions/${createEnrollmentParams.courseVersionId}`,
+        `/users/${createEnrollmentParams.userId}/enrollments/courses/${createEnrollmentParams.courseId}/versions/${createEnrollmentParams.courseVersionId}/${createEnrollmentParams.role}`,
       );
       //expect status code to be 200
       expect(enrollmentResponse.status).toBe(200);
@@ -427,7 +427,7 @@ describe('Enrollment Controller Integration Tests', () => {
       const userId = signUpResponse.body.id;
 
       // 2. Create two courses and enroll user in both
-      const enrollments = [];
+      const enrollments: any[] = [];
       for (let i = 0; i < 2; i++) {
         // Create course
         const courseBody: CreateCourseBody = {
@@ -498,7 +498,7 @@ describe('Enrollment Controller Integration Tests', () => {
 
         // Enroll the user
         const enrollmentResponse = await request(app).post(
-          `/users/${userId}/enrollments/courses/${courseId}/versions/${courseVersionId}`,
+          `/users/${userId}/enrollments/courses/${courseId}/versions/${courseVersionId}/student`,
         );
         expect(enrollmentResponse.status).toBe(200);
         expect(enrollmentResponse.body).toHaveProperty('enrollment');

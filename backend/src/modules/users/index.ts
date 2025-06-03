@@ -6,19 +6,19 @@ import {
 } from 'routing-controllers';
 import {RoutingControllersOptions} from 'routing-controllers';
 import {Container, Service} from 'typedi';
-import {MongoDatabase} from 'shared/database/providers/mongo/MongoDatabase';
-import {EnrollmentRepository} from 'shared/database/providers/mongo/repositories/EnrollmentRepository';
-import {CourseRepository} from 'shared/database/providers/mongo/repositories/CourseRepository';
-import {ItemRepository} from 'shared/database/providers/mongo/repositories/ItemRepository';
+import {MongoDatabase} from '../../shared/database/providers/mongo/MongoDatabase';
+import {EnrollmentRepository} from '../../shared/database/providers/mongo/repositories/EnrollmentRepository';
+import {CourseRepository} from '../../shared/database/providers/mongo/repositories/CourseRepository';
+import {ItemRepository} from '../../shared/database/providers/mongo/repositories/ItemRepository';
 import {EnrollmentController} from './controllers/EnrollmentController';
 import {EnrollmentService} from './services';
-import {UserRepository} from 'shared/database/providers/MongoDatabaseProvider';
+import {UserRepository} from '../../shared/database/providers/MongoDatabaseProvider';
 import {dbConfig} from '../../config/db';
-import {ProgressRepository} from 'shared/database/providers/mongo/repositories/ProgressRepository';
+import {ProgressRepository} from '../../shared/database/providers/mongo/repositories/ProgressRepository';
 import {ProgressController} from './controllers/index';
 import {UserController} from './controllers/UserController';
 import {ProgressService} from './services/ProgressService';
-import {Course} from 'modules/courses';
+import {Course} from '../../modules/courses';
 useContainer(Container);
 
 export function setupUsersModuleDependencies(): void {

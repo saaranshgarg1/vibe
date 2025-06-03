@@ -4,9 +4,9 @@ import {IsArray, ValidateNested} from 'class-validator';
 import {
   ObjectIdToString,
   StringToObjectId,
-} from 'shared/constants/transformerConstants';
-import {ICourseVersion} from 'shared/interfaces/Models';
-import {ID} from 'shared/types';
+} from '../../../../shared/constants/transformerConstants';
+import {ICourseVersion} from '../../../../shared/interfaces/Models';
+import {ID} from '../../../../shared/types';
 import {Module} from './Module';
 import {CreateCourseVersionBody} from '../validators';
 

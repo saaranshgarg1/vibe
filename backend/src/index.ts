@@ -49,7 +49,7 @@ export const ServiceFactory = (
   service.use(corsHandler);
 
   if (process.env.NODE_ENV === 'production') {
-    service.use(rateLimiter);
+    //service.use(rateLimiter);
   }
 
   console.log('--------------------------------------------------------');

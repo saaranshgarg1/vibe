@@ -312,18 +312,12 @@ export default function CoursePage() {
             <div className="flex items-center gap-3 px-0 py-0">
               <div className="relative p-1">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 transition-all duration-300" />
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="relative h-5 w-5 text-primary drop-shadow-sm"
-                >
-                  <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-                </svg>
+                <img
+                  src="https://www.iitrpr.ac.in/iitrpr-conclave/images/iitrpr_white.png"
+                  alt="IIT Ropar Logo"
+                  className="relative h-5 w-5 object-contain bg-white rounded"
+                  style={{ background: 'white' }}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-base font-bold bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">

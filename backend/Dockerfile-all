@@ -43,4 +43,4 @@ ENV PORT=4001
 EXPOSE 4001
 
 # Run the compiled JS
-CMD ["node", "dist/index.js"]
+CMD ["node", "build/index.js"]

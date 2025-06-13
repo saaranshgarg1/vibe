@@ -704,16 +704,16 @@ class ProgressService extends BaseService {
           attemptId,
           session,
         );
-        if (!submittedQuiz) {
-          throw new BadRequestError(
-            'Quiz not submitted or attemptId is invalid',
-          );
-        }
-        if (submittedQuiz.gradingResult.gradingStatus !== 'PASSED') {
-          throw new BadRequestError(
-            'Quiz not passed, user cannot proceed to the next item',
-          );
-        }
+        // if (!submittedQuiz) {
+        //   throw new BadRequestError(
+        //     'Quiz not submitted or attemptId is invalid',
+        //   );
+        // }
+        // if (submittedQuiz.gradingResult.gradingStatus !== 'PASSED') {
+        //   throw new BadRequestError(
+        //     'Quiz not passed, user cannot proceed to the next item',
+        //   );
+        // }
       }
 
       // Get the course version

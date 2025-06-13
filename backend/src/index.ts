@@ -143,16 +143,22 @@ const allModuleOptions: RoutingControllersOptions = {
   },
   currentUserChecker: async function (action: Action) {
     // Use the auth service to check if the user is authorized
+    console.log('\n\n', action.request.headers, '\n\nHEADERS');
     const authService =
       getFromContainer<FirebaseAuthService>(FirebaseAuthService);
     const token = action.request.headers['authorization']?.split(' ')[1];
+    console.log('\n\nToken from headers:\n\n', token);
     if (!token) {
+      console.log('\n\nNo token provided\n\n');
       return false;
     }
-
     try {
+      // const user = await authService.getUserFromToken(token);
+      // console.log('\n\nUser from token:\n\n', user);
+      // return user;
       return await authService.verifyToken(token);
     } catch (error) {
+      console.error('Error verifying token:\n\n', error);
       return false;
     }
   },

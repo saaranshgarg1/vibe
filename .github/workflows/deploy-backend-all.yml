@@ -1,4 +1,4 @@
-﻿name: Deploy Backend to Google Cloud
+﻿name: Deploy Backend (all modules in a single container) to Google Cloud
 
 on:
   push:

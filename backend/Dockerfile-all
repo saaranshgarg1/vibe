@@ -8,7 +8,7 @@ RUN apk add --no-cache git bash \
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 COPY tsconfig.json ./
 COPY . .
 RUN pnpm install
@@ -30,9 +30,9 @@ RUN apk add --no-cache git bash \
   && corepack prepare pnpm@latest --activate
 
 # Copy only production dependencies and compiled code
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
 COPY --from=builder /app/build ./build
-RUN pnpm install 
+RUN pnpm install --prod
 
 # Set environment and port
 ENV NODE_ENV=production

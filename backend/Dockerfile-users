@@ -31,7 +31,7 @@ RUN apk add --no-cache git bash \
 
 # Copy only production dependencies and compiled code
 COPY package.json pnpm-lock.yaml ./
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/build ./build
 RUN pnpm install 
 
 # Set environment and port

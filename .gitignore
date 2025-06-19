@@ -66,3 +66,5 @@ dist/
 
 
 config.json
+
+google_credentials.json

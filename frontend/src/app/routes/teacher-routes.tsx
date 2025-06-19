@@ -5,6 +5,7 @@ import CreateCourse from "@/app/pages/teacher/create-course";
 import Editor from "@/app/pages/teacher/create-article";
 import FaceDetectors from "@/app/pages/testing-proctoring/face-detectors";
 import GetCourse from "@/app/pages/teacher/get-course";
+import AddCourse from "@/app/pages/teacher/add-course";
 
 const teacherRoutes: RouteObject = {
   path: "/teacher",
@@ -33,6 +34,10 @@ const teacherRoutes: RouteObject = {
     {
       path: "testing",
       element: <FaceDetectors />,
+    },
+    {
+      path: "add-course",
+      element: <AddCourse />,
     }
   ],
 };

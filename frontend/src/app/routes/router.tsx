@@ -18,6 +18,8 @@ import StudentLayout from '@/layouts/student-layout'
 import StudentDashboard from "@/app/pages/student/dashboard";
 import StudentCourses from "@/app/pages/student/courses";
 import StudentProfile from "@/app/pages/student/profile";
+import AddCourse from "@/app/pages/teacher/add-course";
+
 // import ParentComponent from '@/ai-components/ParentComponent'
 import ItemContainer from '@/components/Item-container'
 import CoursePage from '@/app/pages/student/course-page'
@@ -269,6 +271,13 @@ const teacherCreateCourseRoute = new Route({
   component: CreateCourse,
 });
 
+export const teacherAddCourseRoute = new Route({
+  getParentRoute: () => teacherLayoutRoute,
+  path: "/courses/add",
+  component: AddCourse, 
+});
+
+
 // Teacher get course route
 const teacherGetCourseRoute = new Route({
   getParentRoute: () => teacherLayoutRoute,
@@ -374,6 +383,7 @@ const routeTree = rootRoute.addChildren([
     teacherCreateArticleRoute,
     teacherGetCourseRoute,
     teacherTestingRoute,
+    teacherAddCourseRoute
   ]),
   studentLayoutRoute.addChildren([
     studentDashboardRoute,

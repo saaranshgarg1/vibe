@@ -20,6 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Link } from "@tanstack/react-router";
+import { teacherAddCourseRoute } from "@/app/routes/router";
+
 import {
   BarChart,
   Bar,
@@ -300,10 +303,16 @@ export default function Page() {
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button variant="outline" className="flex flex-col h-24 px-4 py-3 justify-center items-center gap-2 hover:bg-primary/5 hover:border-primary">
-              <BookOpen className="h-5 w-5" />
-              <span>Add Course</span>
+             
+            <Button asChild variant="outline" className="flex flex-col h-24 px-4 py-3 justify-center items-center gap-2 hover:bg-primary/5 hover:border-primary">
+              <Link to={teacherAddCourseRoute.to}>
+
+                <BookOpen className="h-5 w-5" />
+                <span>Add Course</span>
+              </Link>
             </Button>
+              
+            
             <Button variant="outline" className="flex flex-col h-24 px-4 py-3 justify-center items-center gap-2 hover:bg-primary/5 hover:border-primary">
               <FileText className="h-5 w-5" />
               <span>Create Article</span>

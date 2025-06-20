@@ -8,27 +8,30 @@ import {
   NotFoundRoute,
   useNavigate
 } from '@tanstack/react-router'
-import { useAuthStore } from '@/store/auth-store'
+import { useAuthStore } from '@/lib/store/auth-store'
 import { useEffect } from 'react'
 
 // Import pages and layouts
-import AuthPage from '@/app/pages/auth-page'
+import AuthPage from '@/pages/auth-page'
 import TeacherLayout from '@/layouts/teacher-layout'
 import StudentLayout from '@/layouts/student-layout'
-import StudentDashboard from "@/app/pages/student/dashboard";
-import StudentCourses from "@/app/pages/student/courses";
-import StudentProfile from "@/app/pages/student/profile";
+import StudentDashboard from "@/pages/student/dashboard";
+import StudentCourses from "@/pages/student/courses";
+import StudentProfile from "@/pages/student/profile";
+import AddCoursePage from '@/pages/teacher/AddCoursePage';
+
 // import ParentComponent from '@/ai-components/ParentComponent'
 import ItemContainer from '@/components/Item-container'
-import CoursePage from '@/app/pages/student/course-page'
+import CoursePage from '@/pages/student/course-page'
 import { Item } from '@/components/Item-container' // Assuming Item is defined in Item-container
-import Dashboard from '@/app/pages/teacher/dashboard'
-import CreateCourse from '@/app/pages/teacher/create-course'
-import GetCourse from '@/app/pages/teacher/get-course'
-import Editor from '@/app/pages/teacher/create-article'
-import FaceDetectors from '@/app/pages/testing-proctoring/face-detectors'
+import Dashboard from '@/pages/teacher/dashboard'
+import CreateCourse from '@/pages/teacher/create-course'
+import GetCourse from '@/pages/teacher/get-course'
+import Editor from '@/pages/teacher/create-article'
+import FaceDetectors from '@/pages/testing-proctoring/face-detectors'
 import { NotFoundComponent } from '@/components/not-found'
-import { useCourseStore } from '@/store/course-store'
+import { useCourseStore } from '@/lib/store/course-store'
+
 
 const sampleText = `
 # 🌟 Sample Markdown Document
@@ -290,6 +293,13 @@ const teacherTestingRoute = new Route({
   component: FaceDetectors,
 });
 
+const teacherAddCourseRoute = new Route({
+  getParentRoute: () => teacherLayoutRoute,
+  path: '/add-course',
+  component: AddCoursePage,
+});
+
+
 // Student dashboard route
 const studentDashboardRoute = new Route({
   getParentRoute: () => studentLayoutRoute,
@@ -374,6 +384,7 @@ const routeTree = rootRoute.addChildren([
     teacherCreateArticleRoute,
     teacherGetCourseRoute,
     teacherTestingRoute,
+    teacherAddCourseRoute,
   ]),
   studentLayoutRoute.addChildren([
     studentDashboardRoute,
@@ -393,7 +404,7 @@ const memoryHistory = typeof window !== 'undefined' ? undefined : createMemoryHi
 // Create router instance with additional options
 export const router = new Router({
   routeTree,
-  defaultPreload: false,
+  defaultPreload: 'intent',
   // Use memory history for SSR
   history: memoryHistory,
   // Global not found component

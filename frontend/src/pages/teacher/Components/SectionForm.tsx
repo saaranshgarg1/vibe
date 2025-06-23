@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,12 +11,10 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import Video from "@/components/video"; 
-interface Props {
-  sectionIndex: number;
-}
+import Video from "@/components/video";
 
-interface SectionItem {
+interface ContentItem {
+  id: string;
   type: string;
   videoUrl?: string;
   blog?: string;
@@ -25,16 +23,28 @@ interface SectionItem {
   range?: [number, number];
 }
 
+interface Section {
+  id: string;
+  title: string;
+  contentItems: ContentItem[];
+}
+
+interface Props {
+  sectionIndex: number;
+  sectionData: Section;
+  onSectionChange: (updatedSection: Section) => void;
+  selected: {
+    moduleId: string | null;
+    sectionId: string | null;
+    contentItemId: string | null;
+  };
+  contentItemRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
+}
+
 function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600)
-    .toString()
-    .padStart(2, "0");
-  const m = Math.floor((seconds % 3600) / 60)
-    .toString()
-    .padStart(2, "0");
-  const s = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, "0");
+  const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
+  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, "0");
+  const s = Math.floor(seconds % 60).toString().padStart(2, "0");
   return `${h}:${m}:${s}`;
 }
 
@@ -45,32 +55,40 @@ function extractYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export default function SectionForm({ sectionIndex }: Props) {
-  const [sectionTitle, setSectionTitle] = useState("");
-  const [items, setItems] = useState<SectionItem[]>([]);
-
-  const addItem = () => {
-    setItems([
-      ...items,
-      {
-        type: "",
-        videoUrl: "",
-        blog: "",
-        quiz: "",
-        points: "",
-        range: [0, 300], // default clip range
-      },
-    ]);
+export default function SectionForm({
+  sectionIndex,
+  sectionData,
+  onSectionChange,
+  selected,
+  contentItemRefs,
+}: Props) {
+  const updateSectionTitle = (title: string) => {
+    onSectionChange({ ...sectionData, title });
   };
 
-  const updateItem = (
-    index: number,
-    field: keyof SectionItem,
-    value: any
-  ) => {
-    const updated = [...items];
-    updated[index][field] = value;
-    setItems(updated);
+  const addItem = () => {
+    const newItem: ContentItem = {
+      id: `content-${Date.now()}-${Math.random()}`,
+      type: "",
+      videoUrl: "",
+      blog: "",
+      quiz: "",
+      points: "",
+      range: [0, 300],
+    };
+    onSectionChange({
+      ...sectionData,
+      contentItems: [...sectionData.contentItems, newItem],
+    });
+  };
+
+  const updateItem = (index: number, field: keyof ContentItem, value: any) => {
+    const updatedItems = [...sectionData.contentItems];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
+    };
+    onSectionChange({ ...sectionData, contentItems: updatedItems });
   };
 
   return (
@@ -80,19 +98,24 @@ export default function SectionForm({ sectionIndex }: Props) {
 
         <Input
           placeholder="Section Title"
-          value={sectionTitle}
-          onChange={(e) => setSectionTitle(e.target.value)}
+          value={sectionData.title}
+          onChange={(e) => updateSectionTitle(e.target.value)}
           className="w-full"
         />
 
-        {items.map((item, idx) => {
+        {sectionData.contentItems.map((item, idx) => {
           const videoId = extractYouTubeId(item.videoUrl || "");
           const start = Math.floor(item.range?.[0] ?? 0);
           const end = Math.floor(item.range?.[1] ?? 0);
 
+          const isSelected =
+            selected.sectionId === sectionData.id &&
+            selected.contentItemId === item.id;
+
           return (
             <div
-              key={idx}
+              key={item.id}
+              ref={isSelected ? (el) => el && contentItemRefs.current.set(item.id, el) : null}
               className="border p-4 rounded-md space-y-3 bg-muted/10"
             >
               <Select
@@ -122,7 +145,6 @@ export default function SectionForm({ sectionIndex }: Props) {
 
                   {videoId && (
                     <>
-                      {/* ✅ Using your custom dashboard player */}
                       <Video
                         URL={item.videoUrl || ""}
                         startTime={formatTime(start)}
@@ -140,7 +162,7 @@ export default function SectionForm({ sectionIndex }: Props) {
                           onValueChange={(val) =>
                             updateItem(idx, "range", val as [number, number])
                           }
-                          max={600} // optional upper limit
+                          max={600}
                           step={1}
                         />
                         <div className="flex justify-between text-sm text-muted-foreground mt-2">

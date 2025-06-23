@@ -1,6 +1,19 @@
 "use client"
 
-import {BookOpen,PieChart} from "lucide-react"
+import * as React from "react"
+import {
+  AudioWaveform,
+  BookOpen,
+  Bot,
+  Command,
+  Frame,
+  GalleryVerticalEnd,
+  Map,
+  PieChart,
+  Settings2,
+  SquareTerminal,
+} from "lucide-react"
+
 import { NavMain } from "./nav-main"
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

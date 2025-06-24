@@ -1,66 +1,49 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  totalDocuments: number;
+  totalDocuments?: number;
   onPageChange: (page: number) => void;
-  className?: string;
 }
 
-export const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  totalDocuments, 
-  onPageChange, 
-  className 
-}: PaginationProps) => {
+export const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
   if (totalPages <= 1) return null;
 
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <div className={`flex items-center justify-between mt-6 ${className || ''}`}>
-      <p className="text-sm text-muted-foreground">
-        Showing page {currentPage} of {totalPages} ({totalDocuments} total items)
-      </p>
-      <div className="flex items-center space-x-2">
+    <div className="flex justify-center gap-2 mt-4 flex-wrap">
+      <Button
+        variant="outline"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+      >
+        Prev
+      </Button>
+
+      {pages.map((page) => (
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
+          key={page}
+          variant={page === currentPage ? "default" : "outline"}
+          onClick={() => onPageChange(page)}
         >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
+          {page}
         </Button>
-        
-        {/* Page numbers */}
-        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-          const pageNum = Math.max(1, currentPage - 2) + i;
-          if (pageNum > totalPages) return null;
-          
-          return (
-            <Button
-              key={pageNum}
-              variant={pageNum === currentPage ? "default" : "outline"}
-              size="sm"
-              onClick={() => onPageChange(pageNum)}
-            >
-              {pageNum}
-            </Button>
-          );
-        })}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      ))}
+
+      <Button
+        variant="outline"
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+      >
+        Next
+      </Button>
     </div>
   );
 };

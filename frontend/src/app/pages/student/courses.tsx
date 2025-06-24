@@ -17,12 +17,17 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUserEnrollments, useCourseById } from "@/lib/api/hooks";
-import { useAuthStore } from "@/lib/store/auth-store";
-import { useCourseStore } from "@/lib/store/course-store";
+
+import { useUserEnrollments } from "@/hooks/hooks"; 
+import { useCourseById } from "@/hooks/hooks";
+
+import { useAuthStore } from "@/store/auth-store";
+import { useCourseStore } from "@/store/course-store";
 import { useNavigate } from "@tanstack/react-router";
+
 import { components } from "@/lib/api/schema";
 import { Pagination } from "@/components/ui/Pagination";
+
 
 export default function StudentCourses() {
   const [activeTab, setActiveTab] = useState("enrolled");

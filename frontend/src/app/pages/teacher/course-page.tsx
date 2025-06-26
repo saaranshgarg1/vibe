@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronRight, BookOpen, Edit3, Eye, Save, X, FileText, Plus, MoreVertical, Search, Trash2, Loader2 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-
+import { ProctoringModal } from "../testing-proctoring/EditProctoringModal"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 // Import the hooks and auth store
 import {
   useUpdateCourse,
@@ -18,16 +20,13 @@ import {
   useUserEnrollments,
   useCourseById,
   useCourseVersionById,
+  useEditProctoringSettings
 } from "@/hooks/hooks"
 import { useAuthStore } from "@/store/auth-store"
 import { bufferToHex } from "@/utils/helpers"
 
 // Define types for better TypeScript support
-type RawEnrollment = {
-  _id: string
-  courseId: { buffer: { data: number[] } }
-  courseVersionId: { buffer: { data: number[] } }
-}
+import type { RawEnrollment } from "@/types/course.types"
 
 export default function TeacherCoursesPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -195,7 +194,11 @@ function CourseCard({
     name: "",
     description: "",
   })
+  const [showProctoringModal, setShowProctoringModal] = useState(false)
+  const { editSettings, loading, error } = useEditProctoringSettings()
 
+
+  
   const queryClient = useQueryClient()
 
   // Convert buffers to hex strings for API compatibility
@@ -209,7 +212,7 @@ function CourseCard({
 
   // Fetch full course data
   const { data: course, isLoading: courseLoading, error: courseError } = useCourseById(courseIdHex)
-
+  const settingsExist =!!(course as any)?.settings?.proctoring?.length;
   // Filter based on search query
   const matchesSearch =
     !searchQuery ||
@@ -413,6 +416,20 @@ function CourseCard({
               )}
               Delete
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowProctoringModal(true)
+              }}
+              className="h-8"
+            >
+            <FileText className="h-3 w-3 mr-1" />
+              Proctoring
+            </Button>
+
           </div>
         </div>
       </CardHeader>
@@ -577,6 +594,18 @@ function CourseCard({
               )}
             </div>
           </div>
+
+          
+          <ProctoringModal
+            open={showProctoringModal}
+            onClose={() => setShowProctoringModal(false)}
+            courseId={courseIdHex}
+            courseVersionId={course.versions[0]}
+            isNew={!settingsExist}
+          />
+
+
+
         </CardContent>
       )}
     </Card>
@@ -687,3 +716,5 @@ function VersionCard({
     </Card>
   )
 }
+
+

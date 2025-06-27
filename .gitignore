@@ -5,7 +5,6 @@ Thumbs.db
 # Ignore database files anywhere in the project
 **/lms_db/
 
-
 # Ignore credentials folder anywhere
 **/credentials/
 
@@ -43,7 +42,6 @@ node_modules/
 
 **/coverage/
 
-
 # Ignore all .py files in migrations folders
 # **/migrations/*.py
 # Except __init__.py
@@ -64,20 +62,7 @@ mcp
 frontend/public/models
 dist/
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-config.json
-
-google_credentials.json
-=======
 config.json
 google_credentials.json
 backend/tsconfig.tsbuildinfo
 frontend/.firebase
->>>>>>> saaransh/frontend-changes
-=======
-config.json
-google_credentials.json
-backend/tsconfig.tsbuildinfo
->>>>>>> 2e21506d96558488395864c6dce9d7552ddf6de2

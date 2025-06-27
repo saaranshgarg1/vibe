@@ -31,7 +31,7 @@ export interface CourseSectionProps {
   className?: string;
 }
 
-export interface CourseInfo {
+export interface CourseType {
   courseId: string;
   versionId: string | null;
   moduleId: string | null;

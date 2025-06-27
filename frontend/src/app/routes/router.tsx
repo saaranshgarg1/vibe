@@ -5,7 +5,6 @@ import {
   redirect, 
   createMemoryHistory,
   Outlet,
-  NotFoundRoute,
   useNavigate
 } from '@tanstack/react-router'
 import { useAuthStore } from '@/store/auth-store'
@@ -390,11 +389,12 @@ const coursePageRoute = new Route({
   },
 });
 
-// Create a catch-all not found route
-const notFoundRoute = new NotFoundRoute({
+const catchAllRoute = new Route({
   getParentRoute: () => rootRoute,
+  path: "*",
   component: NotFoundComponent,
 });
+
 
 // Create the router with the route tree
 const routeTree = rootRoute.addChildren([
@@ -421,6 +421,7 @@ const routeTree = rootRoute.addChildren([
     // parentComponentRoute,
   ]),
   coursePageRoute,
+  catchAllRoute,
 ]);
 
 // For server-side rendering compatibility
@@ -434,7 +435,7 @@ export const router = new Router({
   history: memoryHistory,
   // Global not found component
   defaultNotFoundComponent: NotFoundComponent,
-  notFoundRoute,
+  
 });
 
 // Add a navigation guard for redirecting based on roles

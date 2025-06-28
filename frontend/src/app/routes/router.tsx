@@ -32,7 +32,7 @@ import { NotFoundComponent } from '@/components/not-found'
 import { useCourseStore } from '@/store/course-store'
 import CourseEnrollments from '../pages/teacher/course-enrollments'
 import InvitePage from '../pages/teacher/invite'
-
+import TeacherCoursePage from '@/app/pages/teacher/teacher-course-page'; 
 
 const sampleText = `
 # 🌟 Sample Markdown Document
@@ -321,6 +321,12 @@ const teacherCourseInviteRoute = new Route({
   component: InvitePage,
 });
 
+const teacherCoursePreviewRoute = new Route({
+  getParentRoute: () => teacherLayoutRoute,
+  path: '/courses/preview',
+  component: TeacherCoursePage,
+});
+
 // Testing face detection route
 const teacherTestingRoute = new Route({
   getParentRoute: () => teacherLayoutRoute,
@@ -406,6 +412,8 @@ const routeTree = rootRoute.addChildren([
     teacherAudioManagerRoute,
     teacherAddCourseRoute,
     teacherCourseInviteRoute,
+    teacherCoursePreviewRoute,
+
   ]),
   studentLayoutRoute.addChildren([
     studentDashboardRoute,

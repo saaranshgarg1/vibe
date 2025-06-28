@@ -31,7 +31,8 @@ import FaceDetectors from '@/app/pages/testing-proctoring/face-detectors'
 import { NotFoundComponent } from '@/components/not-found'
 import { useCourseStore } from '@/store/course-store'
 import CourseEnrollments from '../pages/teacher/course-enrollments'
-
+import InvitePage from '../pages/teacher/invite'
+import TeacherCoursePage from '@/app/pages/teacher/teacher-course-page'; 
 
 const sampleText = `
 # 🌟 Sample Markdown Document
@@ -279,11 +280,11 @@ const teacherAudioManagerRoute = new Route({
 });
 
 // Teacher create course route
-const teacherCreateCourseRoute = new Route({
-  getParentRoute: () => teacherLayoutRoute,
-  path: '/courses/create',
-  component: CreateCourse,
-});
+// const teacherCreateCourseRoute = new Route({
+//   getParentRoute: () => teacherLayoutRoute,
+//   path: '/courses/create',
+//   component: CreateCourse,
+// });
 
 // Teacher get course route
 const teacherGetCourseRoute = new Route({
@@ -313,6 +314,19 @@ const teacherCourseEnrollmentsRoute = new Route({
   component: CourseEnrollments,
 });
 
+// Teacher Course Invites route
+const teacherCourseInviteRoute = new Route({
+  getParentRoute: () => teacherLayoutRoute,
+  path: '/courses/invite',
+  component: InvitePage,
+});
+
+const teacherCoursePreviewRoute = new Route({
+  getParentRoute: () => teacherLayoutRoute,
+  path: '/courses/preview',
+  component: TeacherCoursePage,
+});
+
 // Testing face detection route
 const teacherTestingRoute = new Route({
   getParentRoute: () => teacherLayoutRoute,
@@ -322,10 +336,9 @@ const teacherTestingRoute = new Route({
 
 const teacherAddCourseRoute = new Route({
   getParentRoute: () => teacherLayoutRoute,
-  path: '/add-course',
+  path: '/courses/create',
   component: AddCoursePage,
 });
-
 
 // Student dashboard route
 const studentDashboardRoute = new Route({
@@ -389,7 +402,7 @@ const routeTree = rootRoute.addChildren([
   authRoute,
   teacherLayoutRoute.addChildren([
     teacherDashboardRoute,
-    teacherCreateCourseRoute,
+    // teacherCreateCourseRoute,
     teacherCreateArticleRoute,
     teacherGetCourseRoute,
     teacherCoursesPageRoute,
@@ -398,6 +411,9 @@ const routeTree = rootRoute.addChildren([
     teacherCourseEnrollmentsRoute,
     teacherAudioManagerRoute,
     teacherAddCourseRoute,
+    teacherCourseInviteRoute,
+    teacherCoursePreviewRoute,
+
   ]),
   studentLayoutRoute.addChildren([
     studentDashboardRoute,

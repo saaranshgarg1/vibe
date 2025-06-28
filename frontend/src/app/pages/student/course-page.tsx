@@ -34,6 +34,7 @@ import {
 import FloatingVideo from "@/components/floating-video";
 import type { itemref } from "@/types/course.types";
 import { logout } from "@/utils/auth";
+import { progress } from "motion/react";
 // Temporary IDs for development
 // const TEMP_USER_ID = "6831c13a7d17e06882be43ca";
 // const TEMP_COURSE_ID = "6831b9651f79c52d445c5d8b";
@@ -218,7 +219,7 @@ export default function CoursePage() {
       // Update the course store with the current progress
       updateCourseNavigation(moduleId, sectionId, itemId);
     }
-  }, [progressData, updateCourseNavigation]);
+  }, [progressData, updateCourseNavigation, refetchProgress]);
 
   // ✅ Additional effect to handle progress updates from handleNext
   useEffect(() => {
@@ -303,35 +304,141 @@ export default function CoursePage() {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  const handleNext = useCallback(() => {
+  // Helper function to find the next item in the course structure
+  const findNextItem = useCallback(() => {
+    if (!courseVersionData || !selectedModuleId || !selectedSectionId || !selectedItemId) {
+      return null;
+    }
+
+    const modules = (courseVersionData as any)?.modules || [];
+    
+    // Find current module index
+    const currentModuleIndex = modules.findIndex((m: any) => m.moduleId === selectedModuleId);
+    if (currentModuleIndex === -1) return null;
+
+    const currentModule = modules[currentModuleIndex];
+    const sections = currentModule.sections || [];
+    
+    // Find current section index
+    const currentSectionIndex = sections.findIndex((s: any) => s.sectionId === selectedSectionId);
+    if (currentSectionIndex === -1) return null;
+
+    const currentSection = sections[currentSectionIndex];
+    const currentSectionItems = sectionItems[selectedSectionId] || [];
+    
+    // Find current item index
+    const currentItemIndex = currentSectionItems.findIndex((item: any) => item._id === selectedItemId);
+    if (currentItemIndex === -1) return null;
+
+    // Try to get next item in current section
+    if (currentItemIndex < currentSectionItems.length - 1) {
+      const nextItem = currentSectionItems[currentItemIndex + 1];
+      return {
+        moduleId: selectedModuleId,
+        sectionId: selectedSectionId,
+        itemId: nextItem._id
+      };
+    }
+
+    // Try to get first item of next section in current module
+    if (currentSectionIndex < sections.length - 1) {
+      const nextSection = sections[currentSectionIndex + 1];
+      const nextSectionItems = sectionItems[nextSection.sectionId];
+      if (nextSectionItems && nextSectionItems.length > 0) {
+        return {
+          moduleId: selectedModuleId,
+          sectionId: nextSection.sectionId,
+          itemId: nextSectionItems[0]._id
+        };
+      }
+    }
+
+    // Try to get first item of first section in next module
+    if (currentModuleIndex < modules.length - 1) {
+      const nextModule = modules[currentModuleIndex + 1];
+      const nextModuleSections = nextModule.sections || [];
+      if (nextModuleSections.length > 0) {
+        const firstNextSection = nextModuleSections[0];
+        const nextModuleItems = sectionItems[firstNextSection.sectionId];
+        if (nextModuleItems && nextModuleItems.length > 0) {
+          return {
+            moduleId: nextModule.moduleId,
+            sectionId: firstNextSection.sectionId,
+            itemId: nextModuleItems[0]._id
+          };
+        }
+      }
+    }
+
+    // No next item found
+    return null;
+  }, [courseVersionData, selectedModuleId, selectedSectionId, selectedItemId, sectionItems]);
+
+  const handleNext = useCallback(async () => {
     // ✅ Stop current item before moving to next
     if (itemContainerRef.current) {
       itemContainerRef.current.stopCurrentItem();
     }
-
-    updateProgress.mutate(
-      {
-        params: {
-          path: {
-            courseId: COURSE_ID,
-            courseVersionId: VERSION_ID
+    
+    try {
+      await updateProgress.mutateAsync(
+        {
+          params: {
+            path: {
+              courseId: COURSE_ID,
+              courseVersionId: VERSION_ID
+            },
           },
-        },
-        body: {
-          moduleId: selectedModuleId ? selectedModuleId : '',
-          sectionId: selectedSectionId ? selectedSectionId : '',
-          itemId: selectedItemId ? selectedItemId : '',
-          watchItemId: useCourseStore.getState().currentCourse?.watchItemId,
-          attemptId: attemptId,
-        },
-      }
-    );
+          body: {
+            moduleId: selectedModuleId ? selectedModuleId : '',
+            sectionId: selectedSectionId ? selectedSectionId : '',
+            itemId: selectedItemId ? selectedItemId : '',
+            watchItemId: useCourseStore.getState().currentCourse?.watchItemId,
+            attemptId: attemptId,
+          },
+        }
+      );
+    }
+    catch (error) {
+      console.log('Error updating progress:', error);
+    }
 
-    // ✅ Wait for progress update to complete, then refetch and update state
+    // Find and navigate to the actual next item
+    const nextItem = findNextItem();
+    
+    if (nextItem) {
+      const { moduleId, sectionId, itemId } = nextItem;
+      
+      // Update local state immediately
+      setSelectedModuleId(moduleId);
+      setSelectedSectionId(sectionId);
+      setSelectedItemId(itemId);
+
+      // Auto-expand the module and section
+      setExpandedModules(prev => ({ ...prev, [moduleId]: true }));
+      setExpandedSections(prev => ({ ...prev, [sectionId]: true }));
+
+      // Set active section to fetch items if not already loaded
+      if (!sectionItems[sectionId]) {
+        setActiveSectionInfo({
+          moduleId,
+          sectionId
+        });
+      }
+
+      // Update the course store with the next item
+      updateCourseNavigation(moduleId, sectionId, itemId);
+    } else {
+      console.log('No next item found - course completed or end of content');
+      // Optionally show completion message or redirect
+    }
+
+    // Refetch progress to sync with backend
     setTimeout(() => {
       refetchProgress();
     }, 300);
-  }, [updateProgress, COURSE_ID, VERSION_ID, selectedModuleId, selectedSectionId, selectedItemId, refetchProgress]);
+
+  }, [updateProgress, COURSE_ID, VERSION_ID, selectedModuleId, selectedSectionId, selectedItemId, findNextItem, sectionItems, setActiveSectionInfo, updateCourseNavigation, refetchProgress, attemptId]);
 
   if (versionLoading || progressLoading || proctoringLoading) {
     return (

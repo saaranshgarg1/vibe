@@ -8,9 +8,10 @@ import { api } from '../lib/openapi';
 import { components } from '../types/schema';
 import { useState } from 'react';
 
-import type { BufferId, LotItem, BaseQuestionRenderView, DescriptiveQuestionRenderView, SelectManyInLotQuestionRenderView, OrderTheLotsQuestionRenderView, NumericAnswerQuestionRenderView, SelectOneInLotQuestionRenderView, QuestionRenderView, SaveQuestion, IQuestionAnswerFeedback, SubmitQuizResponse} from '../types/quiz.types';
+import type { BufferId, LotItem, BaseQuestionRenderView, DescriptiveQuestionRenderView, SelectManyInLotQuestionRenderView, OrderTheLotsQuestionRenderView, NumericAnswerQuestionRenderView, SelectOneInLotQuestionRenderView, QuestionRenderView, SaveQuestion, IQuestionAnswerFeedback, SubmitQuizResponse } from '../types/quiz.types';
 import type { ReportAnomalyBody, ReportAnomalyResponse } from '@/types/reportanomaly.types';
 import type { ProctoringSettings } from '@/types/video.types';
+import { InviteBody, InviteResponse, MessageResponse } from '@/types/invite.types';
 
 // Auth hooks
 
@@ -22,7 +23,7 @@ export function useLogin(): {
   refetch: () => void
 } {
   const result = api.useQuery("post", "/auth/verify", {});
-  
+
   return {
     data: result.data,
     isLoading: result.isLoading,
@@ -33,8 +34,8 @@ export function useLogin(): {
 
 // POST /auth/google
 export function useLoginWithGoogle(): {
-  mutate: (variables: { body: {lastName: string, firstName: string, email: string } }) => void,
-  mutateAsync: (variables: { body: {lastName: string, firstName: string, email: string } }) => Promise<components['schemas']['SignUpResponse']>,
+  mutate: (variables: { body: { lastName: string, firstName: string, email: string } }) => void,
+  mutateAsync: (variables: { body: { lastName: string, firstName: string, email: string } }) => Promise<components['schemas']['SignUpResponse']>,
   data: components['schemas']['TokenVerificationResponse'] | undefined,
   error: string | null,
   isPending: boolean,
@@ -134,15 +135,15 @@ export function useCreateCourse(): {
 }
 
 // GET /courses/{id}
-export function useCourseById(id: string): { 
-  data: components['schemas']['CourseDataResponse'] | undefined, 
-  isLoading: boolean, 
-  error: string | null, 
-  refetch: () => void 
+export function useCourseById(id: string): {
+  data: components['schemas']['CourseDataResponse'] | undefined,
+  isLoading: boolean,
+  error: string | null,
+  refetch: () => void
 } {
-  const result = api.useQuery("get", "/courses/{id}", { 
+  const result = api.useQuery("get", "/courses/{id}", {
     params: { path: { id } }
-  });
+  }, { enabled: !!id });
 
   return {
     data: result.data,
@@ -188,16 +189,16 @@ export function useDeleteCourse(): {
   const result = api.useMutation("delete", "/courses/{id}");
 
   return {
-    mutate:      result.mutate,
+    mutate: result.mutate,
     mutateAsync: result.mutateAsync,
-    data:        result.data as void,
-    isPending:   result.isPending,
-    isSuccess:   result.isSuccess,
-    isError:     result.isError,
-    isIdle:      result.isIdle,
-    reset:       result.reset,
-    status:      result.status,
-    error:       result.error ? (result.error || 'Failed to delete course') : null
+    data: result.data as void,
+    isPending: result.isPending,
+    isSuccess: result.isSuccess,
+    isError: result.isError,
+    isIdle: result.isIdle,
+    reset: result.reset,
+    status: result.status,
+    error: result.error ? (result.error || 'Failed to delete course') : null
   };
 }
 
@@ -233,7 +234,8 @@ export function useCourseVersionById(id: string): {
 } {
   const result = api.useQuery("get", "/courses/versions/{id}", {
     params: { path: { id } }
-  });
+  }, { enabled: !!id }
+  );
 
   return {
     data: result.data,
@@ -438,7 +440,7 @@ export function useItemsBySectionId(versionId: string, moduleId: string, section
 } {
   const result = api.useQuery("get", "/courses/versions/{versionId}/modules/{moduleId}/sections/{sectionId}/items", {
     params: { path: { versionId, moduleId, sectionId } }
-  });
+  }, { enabled: !!versionId && !!moduleId && !!sectionId });
 
   return {
     data: result.data,
@@ -477,12 +479,13 @@ export function useItemById(courseId: string, versionId: string, itemId: string)
 } {
   const result = api.useQuery("get", "/courses/{courseId}/versions/{versionId}/item/{itemId}", {
     params: { path: { courseId, versionId, itemId } }
-  });
+  }, {enabled: !!courseId && !!versionId && !!itemId}
+);
 
   return {
     data: result.data,
     isLoading: result.isLoading,
-    error: result.error ? (result.error.message?result.error.message:"ERROR HERE") : null,
+    error: result.error ? (result.error.message ? result.error.message : "ERROR HERE") : null,
     refetch: result.refetch
   };
 }
@@ -551,8 +554,8 @@ export function useMoveItem(): {
 
 // POST /users/enrollments/courses/{courseId}/versions/{courseVersionId}
 export function useEnrollUser(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } } }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } } }) => Promise<components['schemas']['EnrollUserResponseData']>,
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } } }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } } }) => Promise<components['schemas']['EnrollUserResponseData']>,
   data: components['schemas']['EnrollUserResponseData'] | undefined,
   error: string | null,
   isPending: boolean,
@@ -569,10 +572,10 @@ export function useEnrollUser(): {
   };
 }
 
-// POST /users/enrollments/courses/{courseId}/versions/{courseVersionId}/unenroll
+// POST /users/{userId}/enrollments/courses/{courseId}/versions/{courseVersionId}/unenroll
 export function useUnenrollUser(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } } }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } } }) => Promise<components['schemas']['EnrollUserResponseData']>,
+  mutate: (variables: { params: { path: { userId: string, courseId: string, courseVersionId: string } } }) => void,
+  mutateAsync: (variables: { params: { path: { userId: string, courseId: string, courseVersionId: string } } }) => Promise<components['schemas']['EnrollUserResponseData']>,
   data: components['schemas']['EnrollUserResponseData'] | undefined,
   error: string | null,
   isPending: boolean,
@@ -582,7 +585,7 @@ export function useUnenrollUser(): {
   reset: () => void,
   status: 'idle' | 'pending' | 'success' | 'error'
 } {
-  const result = api.useMutation("post", "/users/enrollments/courses/{courseId}/versions/{courseVersionId}/unenroll");
+  const result = api.useMutation("post", "/users/{userId}/enrollments/courses/{courseId}/versions/{courseVersionId}/unenroll");
   return {
     ...result,
     error: result.error ? (result.error.message || 'User unenrollment failed') : null
@@ -600,7 +603,7 @@ export function useUserEnrollments(page?: number, limit?: number, enabled: boole
     params: {
       query: { page, limit }
     },
-      enabled: enabled
+    enabled: enabled
   });
 
   return {
@@ -612,14 +615,14 @@ export function useUserEnrollments(page?: number, limit?: number, enabled: boole
 }
 
 // GET /enrollments/courses/{courseId}/versions/{courseVersionId}
-export function useCourseVersionEnrollments(courseId: string | undefined,courseVersionId: string | undefined, page?: number, limit?: number, enabled: boolean = true): {
+export function useCourseVersionEnrollments(courseId: string | undefined, courseVersionId: string | undefined, page?: number, limit?: number, enabled: boolean = true): {
   data: components['schemas']['CourseVersionEnrollmentResponse'] | undefined,
   isLoading: boolean,
   error: string | null,
   refetch: () => void
 } {
   const result = api.useQuery("get", "/users/enrollments/courses/{courseId}/versions/{courseVersionId}", {
-    params: { 
+    params: {
       path: { courseId, courseVersionId },
       query: { page, limit }
     },
@@ -644,7 +647,8 @@ export function useUserProgress(courseId: string, courseVersionId: string): {
 } {
   const result = api.useQuery("get", "/users/progress/courses/{courseId}/versions/{courseVersionId}/", {
     params: { path: { courseId, courseVersionId } }
-  });
+  }, { enabled: !!courseId && !!courseVersionId }
+  );
 
   return {
     data: result.data,
@@ -656,8 +660,8 @@ export function useUserProgress(courseId: string, courseVersionId: string): {
 
 // POST /users/progress/courses/{courseId}/versions/{courseVersionId}/start
 export function useStartItem(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['StartItemBody'] }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['StartItemBody'] }) => Promise<components['schemas']['StartItemResponse']>,
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['StartItemBody'] }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['StartItemBody'] }) => Promise<components['schemas']['StartItemResponse']>,
   data: components['schemas']['StartItemResponse'] | undefined,
   error: string | null,
   isPending: boolean,
@@ -676,8 +680,8 @@ export function useStartItem(): {
 
 // POST /users/progress/courses/{courseId}/versions/{courseVersionId}/stop
 export function useStopItem(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['StopItemBody'] }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['StopItemBody'] }) => Promise<unknown>,
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['StopItemBody'] }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['StopItemBody'] }) => Promise<unknown>,
   data: unknown | undefined,
   error: string | null,
   isPending: boolean,
@@ -696,8 +700,8 @@ export function useStopItem(): {
 
 // PATCH /users/progress/courses/{courseId}/versions/{courseVersionId}/update
 export function useUpdateProgress(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['UpdateProgressBody'] }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['UpdateProgressBody'] }) => Promise<unknown>,
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['UpdateProgressBody'] }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['UpdateProgressBody'] }) => Promise<unknown>,
   data: unknown | undefined,
   error: string | null,
   isPending: boolean,
@@ -716,8 +720,8 @@ export function useUpdateProgress(): {
 
 // PATCH /users/progress/courses/{courseId}/versions/{courseVersionId}/reset
 export function useResetProgress(): {
-  mutate: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['ResetCourseProgressBody'] }) => void,
-  mutateAsync: (variables: { params: { path: {  courseId: string, courseVersionId: string } }, body: components['schemas']['ResetCourseProgressBody'] }) => Promise<unknown>,
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['ResetCourseProgressBody'] }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: components['schemas']['ResetCourseProgressBody'] }) => Promise<unknown>,
   data: unknown | undefined,
   error: string | null,
   isPending: boolean,
@@ -744,7 +748,7 @@ export function useUserByFirebaseUID(firebaseUID: string): {
 } {
   const result = api.useQuery("get", "/users/firebase/{firebaseUID}", {
     params: { path: { firebaseUID } }
-  });
+  }, { enabled: !!firebaseUID });
 
   return {
     data: result.data,
@@ -791,8 +795,8 @@ export function useAttemptQuiz(): {
 }
 
 export function useSaveQuiz(): {
-  mutate: (variables: { params: { path: { quizId: string, attemptId: string} }, body:{answers: SaveQuestion[]} }) => void,
-  mutateAsync: (variables: { params: { path: { quizId: string, attemptId: string} }, body:{answers: SaveQuestion[]} }) => Promise<void>,
+  mutate: (variables: { params: { path: { quizId: string, attemptId: string } }, body: { answers: SaveQuestion[] } }) => void,
+  mutateAsync: (variables: { params: { path: { quizId: string, attemptId: string } }, body: { answers: SaveQuestion[] } }) => Promise<void>,
   data: void,
   error: string | null,
   isPending: boolean,
@@ -818,8 +822,8 @@ export function useSaveQuiz(): {
 }
 
 export function useSubmitQuiz(): {
-  mutate: (variables: { params: { path: { quizId: string, attemptId: string} }, body:{answers: SaveQuestion[]} }) => SubmitQuizResponse,
-  mutateAsync: (variables: { params: { path: { quizId: string, attemptId: string} }, body:{answers: SaveQuestion[]} }) => Promise<SubmitQuizResponse>,
+  mutate: (variables: { params: { path: { quizId: string, attemptId: string } }, body: { answers: SaveQuestion[] } }) => SubmitQuizResponse,
+  mutateAsync: (variables: { params: { path: { quizId: string, attemptId: string } }, body: { answers: SaveQuestion[] } }) => Promise<SubmitQuizResponse>,
   data: SubmitQuizResponse | undefined,
   error: string | null,
   isPending: boolean,
@@ -871,15 +875,17 @@ export function useReportAnomaly(): {
   };
 }
 
-export function useProctoringSettings( courseId: string, versionId: string ): {
-  data:  | undefined,
+export function useProctoringSettings(courseId: string, versionId: string): {
+  data: | undefined,
   isLoading: boolean,
   error: string | null,
   refetch: () => void
 } {
   const result = api.useQuery("get", "/settings/users/{courseId}/{versionId}", {
     params: { path: { courseId, versionId } }
-  });
+  },
+    { enabled: !!courseId && !!versionId }
+  );
 
   return {
     data: result.data,
@@ -901,27 +907,27 @@ export function useEditProctoringSettings() {
   ) => {
     setLoading(true);
     setError(null);
-   
-   const method = isNew ? 'POST' : 'PUT';
-   const url = isNew
+
+    const method = isNew ? 'POST' : 'PUT';
+    const url = isNew
       ? '/api/settings/courses'
       : `/api/settings/courses/${courseId}/${courseVersionId}/proctoring`;
 
     const body = isNew
       ? {
-          courseId,
-          courseVersionId,
-          detectors: detectors.map((d) => ({
-            detectorName: d.name,
-            settings: { enabled: d.enabled },
-          })),
-        }
+        courseId,
+        courseVersionId,
+        detectors: detectors.map((d) => ({
+          detectorName: d.name,
+          settings: { enabled: d.enabled },
+        })),
+      }
       : {
-          detectors: detectors.map((d) => ({
-            detectorName: d.name,
-            settings: { enabled: d.enabled },
-          })),
-        };
+        detectors: detectors.map((d) => ({
+          detectorName: d.name,
+          settings: { enabled: d.enabled },
+        })),
+      };
 
     try {
       const res = await fetch(url, {
@@ -940,4 +946,80 @@ export function useEditProctoringSettings() {
   };
 
   return { editSettings, loading, error };
+}
+
+export function useInviteUsers(): {
+  mutate: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: InviteBody }) => void,
+  mutateAsync: (variables: { params: { path: { courseId: string, courseVersionId: string } }, body: InviteBody }) => Promise<InviteResponse>,
+  data: InviteResponse | undefined,
+  error: string | null,
+  isPending: boolean,
+  isSuccess: boolean,
+  isError: boolean,
+  isIdle: boolean,
+  reset: () => void,
+  status: 'idle' | 'pending' | 'success' | 'error'
+} {
+  const result = api.useMutation("post", "/notifications/invite/courses/{courseId}/versions/{courseVersionId}");
+  return {
+    ...result,
+    error: result.error ? (result.error.message || 'Failed to invite users') : null
+  };
+}
+
+export function useCourseInvites(courseId: string, courseVersionId: string, enabled: boolean = true): {
+  data: InviteResponse | undefined,
+  isLoading: boolean,
+  error: string | null,
+  refetch: () => void
+} {
+  const result = api.useQuery("get", "/notifications/invite/courses/{courseId}/versions/{courseVersionId}", {
+    params: { path: { courseId, courseVersionId } },
+    enabled: enabled
+  });
+
+  return {
+    data: result.data,
+    isLoading: result.isLoading,
+    error: result.error ? (result.error.message || 'Failed to fetch course invites') : null,
+    refetch: result.refetch
+  };
+}
+
+export function useResendInvite(): {
+  mutate: (variables: { params: { path: { inviteId: string } } }) => void,
+  mutateAsync: (variables: { params: { path: { inviteId: string } } }) => Promise<MessageResponse>,
+  data: MessageResponse | undefined,
+  error: string | null,
+  isPending: boolean,
+  isSuccess: boolean,
+  isError: boolean,
+  isIdle: boolean,
+  reset: () => void,
+  status: 'idle' | 'pending' | 'success' | 'error'
+} {
+  const result = api.useMutation("post", "/notifications/invite/resend/{inviteId}");
+  return {
+    ...result,
+    error: result.error ? (result.error.message || 'Failed to resend invite') : null
+  };
+}
+
+export function useCancelInvite(): {
+  mutate: (variables: { params: { path: { inviteId: string } } }) => void,
+  mutateAsync: (variables: { params: { path: { inviteId: string } } }) => Promise<MessageResponse>,
+  data: MessageResponse | undefined,
+  error: string | null,
+  isPending: boolean,
+  isSuccess: boolean,
+  isError: boolean,
+  isIdle: boolean,
+  reset: () => void,
+  status: 'idle' | 'pending' | 'success' | 'error'
+} {
+  const result = api.useMutation("post", "/notifications/invite/cancel/{inviteId}");
+  return {
+    ...result,
+    error: result.error ? (result.error.message || 'Failed to cancel invite') : null
+  };
 }

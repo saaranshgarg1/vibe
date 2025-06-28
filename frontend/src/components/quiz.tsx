@@ -57,6 +57,7 @@ const Quiz = forwardRef<QuizRef, QuizProps>(({
   isProgressUpdating,
   attemptId,
   setAttemptId,
+  displayNextLesson
 }, ref) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | number | number[] | string[]>>({});
@@ -781,6 +782,31 @@ const Quiz = forwardRef<QuizRef, QuizProps>(({
                 </div>
               </Card>
             </div>
+
+            {/* Show Next Lesson button at the bottom if displayNextLesson is true */}
+            {displayNextLesson && onNext && (
+              <div className="text-center pt-4">
+                <Button
+                  onClick={onNext}
+                  disabled={isProgressUpdating}
+                  variant="outline"
+                  size="lg"
+                  className="min-w-[300px] h-12 text-lg font-semibold border-2 hover:bg-accent transition-all duration-200"
+                >
+                  {isProgressUpdating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-3" />
+                      Processing
+                    </>
+                  ) : (
+                    <>
+                      Skip to Next Lesson
+                      <ChevronRight className="h-5 w-5 ml-3" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
           </CardContent>
         </Card>

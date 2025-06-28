@@ -53,9 +53,9 @@ export class UserController {
 
   @OpenAPI({
     summary: 'Edit user information',
-    description: 'Retrieves user information based on the provided user ID.',
+    description: 'Edits the user information based on the provided body.',
   })
-  @Get('/edit')
+  @Patch('/edit')
   @OnUndefined(200)
   @ResponseSchema(UserNotFoundErrorResponse, {
     description: 'User not found',

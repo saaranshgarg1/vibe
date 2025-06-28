@@ -7,10 +7,10 @@ import FaceDetectors from "@/app/pages/testing-proctoring/face-detectors";
 import GetCourse from "@/app/pages/teacher/get-course";
 import TeacherCoursesPage from "@/app/pages/teacher/course-page";
 import TeacherProfile from "@/app/pages/teacher/profile";
-import { LiveQuiz } from "@/app/pages/teacher/live-quiz" // Uncomment if you want to use AudioManager
+import { LiveQuiz } from "@/app/pages/teacher/live-quiz";
 import CourseEnrollments from "../pages/teacher/course-enrollments";
 import AddCoursePage from "@/app/pages/teacher/AddCoursePage";
-import InvitePage from "../pages/teacher/invite";
+import TeacherCoursePage from "@/pages/teacher/teacher-course-page"; 
 
 const teacherRoutes: RouteObject = {
   path: "/teacher",
@@ -26,13 +26,12 @@ const teacherRoutes: RouteObject = {
     },
     {
       path: "courses/get",
-      element: <GetCourse />
+      element: <GetCourse />,
     },
-    // {
-    //   path: "courses/create",
-    //   element: <CreateCourse />,
-    // },
-    
+    {
+      path: "courses/preview",
+      element: <TeacherCoursePage />,
+    },
     {
       path: "courses/articles/create",
       element: <Editor />,
@@ -47,24 +46,20 @@ const teacherRoutes: RouteObject = {
     },
     {
       index: true,
-      element: <Dashboard />, // Default to Dashboard
+      element: <Dashboard />,
     },
     {
       path: "testing",
       element: <FaceDetectors />,
     },
     {
-      path: "courses/invite",
-      element: <InvitePage />, // Invite page for enrolling users in a course
-    },
-    {
       path: "transcribe",
-      element: <LiveQuiz />, // Uncomment if you want to use AudioManager
+      element: <LiveQuiz />,
     },
     {
-      path:"courses/create",
-      element:<AddCoursePage /> 
-    }
+      path: "courses/create",
+      element: <AddCoursePage />,
+    },
   ],
 };
 

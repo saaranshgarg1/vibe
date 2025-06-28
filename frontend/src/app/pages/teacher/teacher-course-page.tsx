@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 
 import { useCourseStore } from "@/store/course-store";
-import Article from "@/components/article";
-// import Video from "@/components/video"; // Uncomment when ready
-// import Quiz from "@/components/quiz";   // Uncomment when ready
 
+// import Article from "@/components/article";
+// import Video from "@/components/video";
+// import Quiz from "@/components/quiz";
+
+// ✅ Icons per item type
 const getItemIcon = (type: string) => {
   switch (type) {
     case "article": return <FileText className="h-3 w-3" />;
@@ -80,7 +82,7 @@ export default function TeacherCoursePage() {
       _id: generateId(),
       type,
       name: `New ${type}`,
-      content: "<p>Sample content</p>",
+      content: "<p>Sample article content</p>",
     };
 
     setModules((prev) =>
@@ -175,7 +177,6 @@ export default function TeacherCoursePage() {
                                     </SidebarMenuSubButton>
                                   </SidebarMenuSubItem>
                                 ))}
-
                                 <div className="ml-6 mt-2">
                                   <select
                                     className="text-xs border rounded px-2 py-1 bg-background text-foreground"
@@ -225,6 +226,7 @@ export default function TeacherCoursePage() {
           </SidebarFooter>
         </Sidebar>
 
+        {/* Course Editor Area */}
         <SidebarInset className="flex-1 bg-background overflow-y-auto">
           <div className="w-full max-w-3xl p-6">
             <h2 className="text-lg font-semibold mb-4">Course Editor</h2>
@@ -316,23 +318,9 @@ export default function TeacherCoursePage() {
 
                 <div className="mt-4 p-4 border rounded-md bg-muted/30">
                   <p className="text-sm font-medium mb-2 text-muted-foreground">Preview</p>
-                  {selectedEntity.type === "item" && selectedEntity.data?.type === "article" && (
-                    <Article content={selectedEntity.data.content} />
-                  )}
-
-                  {/* Uncomment when backend-ready components are available */}
-                  {/* {selectedEntity.type === "item" && selectedEntity.data?.type === "video" && (
-                    <Video url={selectedEntity.data.url} />
-                  )}
-                  {selectedEntity.type === "item" && selectedEntity.data?.type === "quiz" && (
-                    <Quiz questions={selectedEntity.data.questions} />
-                  )} */}
-
-                  {selectedEntity.type === "item" && selectedEntity.data?.type !== "article" && (
-                    <div className="text-sm text-muted-foreground">
-                      Preview not available for this item yet.
-                    </div>
-                  )}
+                  <div className="text-sm text-muted-foreground">
+                    Preview not available for this type.
+                  </div>
                 </div>
               </div>
             ) : (

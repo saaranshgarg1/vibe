@@ -85,7 +85,7 @@ export default function StudentCourses() {
     const { data: courseDetails, isLoading: isCourseLoading } = useCourseById(courseId);
     const { setCurrentCourse } = useCourseStore();
     const navigate = useNavigate();
-    const progress = Math.floor(Math.random() * 100);
+    const progress = enrollment?.completionPercentage ?? 0;
 
     if (isCourseLoading) {
       return (

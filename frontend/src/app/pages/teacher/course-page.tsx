@@ -1,28 +1,31 @@
-// ✅ Final merged version (259 lines): Preserves teammate's original structure, fixes rendering issue, uses teacherCoursesData properly with CourseCard
-
 "use client"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ChevronRight, Edit3, Save, X, FileText, Plus, Trash2, Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Pagination } from "@/components/ui/Pagination";
-import { useNavigate } from "@tanstack/react-router";
+import { useState,useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
-  useUpdateCourse,
-  useDeleteCourse,
-  useCreateCourseVersion,
-  useDeleteCourseVersion,
-  useCourseById,
-  useCourseVersionById,
-  useTeacherCourses,
-} from "@/hooks/hooks";
-import { useAuthStore } from "@/store/auth-store";
-import { bufferToHex } from "@/utils/helpers";
+  ChevronRight,
+  BookOpen,
+  Edit3,
+  Eye,
+  Save,
+  X,
+  FileText,
+  Plus,
+  Search,
+  Trash2,
+  Loader2,
+  Users,
+} from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "@tanstack/react-router"
+import { ProctoringModal } from "../testing-proctoring/EditProctoringModal"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Pagination } from "@/components/ui/Pagination";
 import {
   Select,
   SelectContent,
@@ -30,61 +33,157 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { CourseType } from "@/types/course.types";
+
+
+// Import the hooks and auth store
+import {
+  useUpdateCourse,
+  useDeleteCourse,
+  useCreateCourseVersion,
+  useDeleteCourseVersion,
+  useUserEnrollments,
+  useCourseById,
+  useCourseVersionById,
+  useEditProctoringSettings
+} from "@/hooks/hooks"
+import { useAuthStore } from "@/store/auth-store"
+import { bufferToHex } from "@/utils/helpers"
+
+// Define types for better TypeScript support
+import type { RawEnrollment } from "@/types/course.types"
 
 export default function TeacherCoursesPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("")
+  const queryClient = useQueryClient()
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(5);
-  const queryClient = useQueryClient();
-  const { user } = useAuthStore();
-  const userId = user?.userId;
 
-  console.log("User ID:", userId);
-  if (!userId) return <div>Loading user info...</div>;
 
-  const {
-    data: teacherCoursesData,
-    isLoading,
-    error,
-    refetch,
-  } = useTeacherCourses(userId, currentPage, limit);
+  // Get user from auth store
+  const { user } = useAuthStore()
+const {
+  data: enrollmentsResponse,
+  isLoading: enrollmentsLoading,
+  error: enrollmentsError,
+  refetch,
+} = useUserEnrollments(user?.userId, currentPage, limit, true);
 
-  const enrollments = teacherCoursesData?.enrollments || [];
+const enrollments = enrollmentsResponse?.enrollments || [];
+const totalPages = enrollmentsResponse?.totalPages || 1;
+const totalDocuments = enrollmentsResponse?.totalDocuments || 0;
+const currentPageFromAPI = enrollmentsResponse?.currentPage || 1;
 
-  const totalPages = teacherCoursesData?.totalPages || 1;
-  const totalDocuments = teacherCoursesData?.totalDocuments || 0;
-  const currentPageFromAPI = teacherCoursesData?.currentPage || 1;
-
-  useEffect(() => {
-    if (currentPageFromAPI !== currentPage) {
-      setCurrentPage(currentPageFromAPI);
+useEffect(() => {
+  if (currentPageFromAPI !== currentPage) {
+    setCurrentPage(currentPageFromAPI);
+  }
+}, [currentPageFromAPI]);
+  // Get unique courses (in case user is enrolled in multiple versions of same course)
+  const uniqueCourses = enrollments.reduce((acc: RawEnrollment[], enrollment: RawEnrollment) => {
+    const courseIdHex = bufferToHex(enrollment.courseId)
+    const existingCourse = acc.find((e) => bufferToHex(e.courseId) === courseIdHex)
+    if (!existingCourse) {
+      acc.push(enrollment)
     }
-  }, [currentPageFromAPI]);
+    return acc
+  }, [])
 
+  const createNewCourse = () => {
+    window.location.href = "/courses/add"
+  }
+
+  // Filter courses based on search query
+  const filteredCourses = uniqueCourses.filter((enrollment: RawEnrollment) => {
+    // We'll need to check this in the CourseCard component since we need to fetch course data first
+    return true // For now, show all enrollments
+  })
+
+  // Invalidate all related queries
   const invalidateAllQueries = () => {
-    queryClient.invalidateQueries();
-  };
+    // Invalidate enrollments
+    queryClient.invalidateQueries({ 
+      queryKey: ['get', '/users/enrollments'] 
+    })
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) {
-    console.error("Error fetching teacher courses:", error);
-    return <div>Error loading courses.</div>;
+    // Invalidate all course queries
+    queryClient.invalidateQueries({
+      queryKey: ["get", "/courses/{id}"],
+    })
+
+    // Invalidate all course version queries
+    queryClient.invalidateQueries({
+      queryKey: ["get", "/courses/versions/{id}"],
+    })
+  }
+
+  // Loading state
+  if (enrollmentsLoading) {
+    return (
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">Loading courses...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (enrollmentsError) {
+    return (
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Failed to load courses</h3>
+            <p className="text-muted-foreground mb-4">{enrollmentsError}</p>
+            <Button onClick={() => refetch()}>Try Again</Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (uniqueCourses.length === 0) {
+    return (
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <div className="mb-4">
+              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No courses found</h3>
+            <p className="text-muted-foreground mb-4">Create your first course to get started</p>
+            <Button onClick={createNewCourse}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Course
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="flex-1 overflow-auto p-6">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">My Courses</h1>
             <p className="text-muted-foreground mt-1">Manage your courses and versions</p>
           </div>
-          <Button onClick={() => (window.location.href = "/courses/add")}>Create Course</Button>
+          <Button onClick={createNewCourse} className="h-10">
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Course
+          </Button>
         </div>
 
+        {/* Search Section */}
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search courses..."
               value={searchQuery}
@@ -92,181 +191,602 @@ export default function TeacherCoursesPage() {
               className="pl-10"
             />
           </div>
-          <div className="ml-auto">
-            <Select
-              value={limit.toString()}
-              onValueChange={(value) => {
-                setLimit(Number(value));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Courses per page" />
-              </SelectTrigger>
-              <SelectContent>
-                {[5, 10, 15, 20].map((value) => (
-                  <SelectItem key={value} value={value.toString()}>
-                    {value} / page
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select
+  value={limit.toString()}
+  onValueChange={(value) => {
+    setLimit(Number(value));
+    setCurrentPage(1); // Reset to page 1 on limit change
+  }}
+>
+  <SelectTrigger className="w-[120px]">
+    <SelectValue placeholder="Courses per page" />
+  </SelectTrigger>
+  <SelectContent>
+    {[5, 10, 15, 20].map((value) => (
+      <SelectItem key={value} value={value.toString()}>
+        {value} / page
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
         </div>
 
+        {/* Courses List */}
         <div className="space-y-4">
-{enrollments.map((enrollment) => (
-  <CourseCard
-    key={enrollment._id}
-    courseId={bufferToHex(enrollment.courseId)}
-    onInvalidate={invalidateAllQueries}
-    searchQuery={searchQuery}
-  />
-))}
-</div>
-
+          {filteredCourses.map((enrollment: RawEnrollment) => (
+            <CourseCard
+              key={enrollment._id}
+              enrollment={enrollment}
+              searchQuery={searchQuery}
+              onInvalidate={invalidateAllQueries}
+            />
+          ))}
+        </div>
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalDocuments={totalDocuments}
-          onPageChange={(p) => setCurrentPage(p)}
-        />
+  currentPage={currentPage}
+  totalPages={totalPages}
+  totalDocuments={totalDocuments}
+  onPageChange={(p) => setCurrentPage(p)}
+/>
+
       </div>
     </div>
-  );
+  )
 }
 
-function CourseCard({ courseId, onInvalidate,searchQuery }: { courseId: string; onInvalidate: () => void;searchQuery: string }) {
-  const queryClient = useQueryClient();
-  const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editValues, setEditValues] = useState({ name: "", description: "" });
-  const [newVersion, setNewVersion] = useState({ version: "", description: "" });
-  const [showForm, setShowForm] = useState(false);
+function CourseCard({
+  enrollment,
+  searchQuery,
+  onInvalidate,
+}: {
+  enrollment: RawEnrollment
+  searchQuery: string
+  onInvalidate: () => void
+}) {
+  const [showNewVersionForm, setShowNewVersionForm] = useState(false)
+  const [newVersionData, setNewVersionData] = useState({ version: "", description: "" })
+  const [expandedCourse, setExpandedCourse] = useState(false)
+  const [editingCourse, setEditingCourse] = useState(false)
+  const [editingValues, setEditingValues] = useState<{ name: string; description: string }>({
+    name: "",
+    description: "",
+  })
+  const [showProctoringModal, setShowProctoringModal] = useState(false)
+  const { editSettings, loading, error } = useEditProctoringSettings()
 
-  const { data: course, isLoading, error } = useCourseById(courseId);
-  const updateCourse = useUpdateCourse();
-  const deleteCourse = useDeleteCourse();
-  const createVersion = useCreateCourseVersion();
-  const deleteVersion = useDeleteCourseVersion();
 
-  const toggleEdit = () => {
-    setEditing(true);
-    setEditValues({ name: course.name, description: course.description });
-  };
+  
+  const queryClient = useQueryClient()
 
-  const handleSave = async () => {
-    await updateCourse.mutateAsync({
-      params: { path: { id: courseId } },
-      body: editValues,
-    });
-    queryClient.invalidateQueries();
-    setEditing(false);
-    onInvalidate();
-  };
+  // Convert buffers to hex strings for API compatibility
+  const courseIdHex = bufferToHex(enrollment.courseId)
 
-  const handleDelete = async () => {
-    if (!confirm("Delete this course?")) return;
-    await deleteCourse.mutateAsync({ params: { path: { id: courseId } } });
-    onInvalidate();
-  };
+  // API Hooks
+  const updateCourseMutation = useUpdateCourse()
+  const deleteCourseMutation = useDeleteCourse()
+  const createVersionMutation = useCreateCourseVersion()
+  const deleteVersionMutation = useDeleteCourseVersion()
 
-  const handleCreateVersion = async () => {
-    if (!newVersion.version || !newVersion.description) return;
-    await createVersion.mutateAsync({
-      params: { path: { id: courseId } },
-      body: newVersion,
-    });
-    setShowForm(false);
-    onInvalidate();
-  };
+  // Fetch full course data
+  const { data: course, isLoading: courseLoading, error: courseError } = useCourseById(courseIdHex)
+  const settingsExist =!!(course as any)?.settings?.proctoring?.length;
+  // Filter based on search query
+  const matchesSearch =
+    !searchQuery ||
+    course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course?.description?.toLowerCase().includes(searchQuery.toLowerCase())
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error || !course) return <p>Error loading course</p>;
+  if (!matchesSearch) {
+    return null
+  }
 
-  if (
-    searchQuery &&
-    !course.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    !course.description.toLowerCase().includes(searchQuery.toLowerCase())
-  ) {
-    return null;
+  if (courseLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <span className="text-muted-foreground">Loading course...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (courseError || !course) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-destructive">
+            <p>Error loading course data</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const toggleCourse = () => {
+    setExpandedCourse(!expandedCourse)
+  }
+
+  const startEditing = () => {
+    setEditingCourse(true)
+    setEditingValues({
+      name: course.name,
+      description: course.description,
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingCourse(false)
+    setEditingValues({ name: "", description: "" })
+  }
+
+  const saveEditing = async () => {
+    try {
+      await updateCourseMutation.mutateAsync({
+        params: { path: { id: courseIdHex } },
+        body: {
+          name: editingValues.name,
+          description: editingValues.description,
+        },
+      })
+
+      // Invalidate specific course query
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/courses/{id}", { params: { path: { id: courseIdHex } } }],
+      })
+
+      setEditingCourse(false)
+      setEditingValues({ name: "", description: "" })
+      onInvalidate() // Also invalidate parent queries
+    } catch (error) {
+      console.error("Failed to update course:", error)
+    }
+  }
+
+  const deleteCourse = async () => {
+    if (!confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      await deleteCourseMutation.mutateAsync({
+        params: { path: { id: courseIdHex } },
+      })
+
+      // Invalidate all related queries after deletion
+      onInvalidate()
+    } catch (error) {
+      console.error("Failed to delete course:", error)
+    }
+  }
+
+  const showVersionForm = () => {
+    setShowNewVersionForm(true)
+    setNewVersionData({ version: "", description: "" })
+  }
+
+  const cancelNewVersion = () => {
+    setShowNewVersionForm(false)
+    setNewVersionData({ version: "", description: "" })
+  }
+
+  const saveNewVersion = async () => {
+    if (!newVersionData.version.trim() || !newVersionData.description.trim()) {
+      alert("Please fill in both version name and description")
+      return
+    }
+
+    try {
+      await createVersionMutation.mutateAsync({
+        params: { path: { id: courseIdHex } },
+        body: {
+          version: newVersionData.version,
+          description: newVersionData.description,
+        },
+      })
+
+      // Invalidate course query to refresh versions list
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/courses/{id}", { params: { path: { id: courseIdHex } } }],
+      })
+
+      setShowNewVersionForm(false)
+      setNewVersionData({ version: "", description: "" })
+      onInvalidate() // Also invalidate parent queries
+    } catch (error) {
+      console.error("Failed to create version:", error)
+    }
   }
 
   return (
-    <Card>
-      <CardHeader onClick={() => !editing && setExpanded(!expanded)} className="cursor-pointer">
-        <div className="flex justify-between items-center">
-          <CardTitle>{course.name}</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); toggleEdit(); }}>
-              <Edit3 className="h-3 w-3 mr-1" /> Edit
+    <Card
+      className={`transition-all duration-300 hover:shadow-lg ${
+        expandedCourse ? "ring-2 ring-primary/20 shadow-lg" : ""
+      }`}
+    >
+      {/* Course Header - Always Visible */}
+      <CardHeader
+        className="cursor-pointer hover:bg-accent/30 transition-colors duration-200"
+        onClick={() => !editingCourse && toggleCourse()}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div
+              className={`transition-transform duration-200 ${expandedCourse ? "rotate-90" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleCourse()
+              }}
+            >
+              <ChevronRight className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <CardTitle className="text-xl font-bold text-foreground truncate">{course.name}</CardTitle>
+              </div>
+
+              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span>{course.versions?.length || 0} versions</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!expandedCourse) toggleCourse()
+                startEditing()
+              }}
+              className="h-8 cursor-pointer"
+              disabled={updateCourseMutation.isPending}
+            >
+              {updateCourseMutation.isPending ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Edit3 className="h-3 w-3 mr-1" />
+              )}
+              Edit
             </Button>
-            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="text-destructive">
-              <Trash2 className="h-3 w-3 mr-1" /> Delete
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!expandedCourse) toggleCourse()
+                deleteCourse()
+              }}
+              className="h-8 text-destructive hover:text-destructive cursor-pointer"
+              disabled={deleteCourseMutation.isPending}
+            >
+              {deleteCourseMutation.isPending ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3 mr-1" />
+              )}
+              Delete
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!expandedCourse) toggleCourse()
+                setShowProctoringModal(true)
+              }}
+              className="h-8"
+            >
+            <FileText className="h-3 w-3 mr-1" />
+              Settings
             </Button>
           </div>
         </div>
       </CardHeader>
-      {expanded && (
-        <CardContent className="space-y-4">
-          {editing ? (
-            <div className="space-y-2">
-              <Input value={editValues.name} onChange={(e) => setEditValues({ ...editValues, name: e.target.value })} />
-              <Textarea value={editValues.description} onChange={(e) => setEditValues({ ...editValues, description: e.target.value })} />
-              <div className="flex gap-2">
-                <Button onClick={handleSave}><Save className="h-3 w-3 mr-1" /> Save</Button>
-                <Button variant="outline" onClick={() => setEditing(false)}><X className="h-3 w-3 mr-1" /> Cancel</Button>
-              </div>
-            </div>
-          ) : (
-            <p>{course.description}</p>
-          )}
 
-          <div>
-            <div className="flex justify-between items-center">
-              <h4>Versions</h4>
-              <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
-                <Plus className="h-3 w-3 mr-1" /> New
-              </Button>
-            </div>
-            {showForm && (
-              <div className="space-y-2 mt-2">
-                <Input placeholder="Version" value={newVersion.version} onChange={(e) => setNewVersion({ ...newVersion, version: e.target.value })} />
-                <Textarea placeholder="Description" value={newVersion.description} onChange={(e) => setNewVersion({ ...newVersion, description: e.target.value })} />
-                <Button onClick={handleCreateVersion}><Save className="h-3 w-3 mr-1" /> Save Version</Button>
+      {/* Expanded Content */}
+      {expandedCourse && (
+        <CardContent className="pt-0 space-y-6">
+          <Separator />
+
+          {/* Course Description Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Course Description</h3>
+            {editingCourse ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Course Name</label>
+                  <Input
+                    value={editingValues.name}
+                    onChange={(e) =>
+                      setEditingValues((prev: { name: string; description: string }) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="border-primary/30 focus:border-primary"
+                    placeholder="Course name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Description</label>
+                  <Textarea
+                    value={editingValues.description}
+                    onChange={(e) =>
+                      setEditingValues((prev: { name: string; description: string }) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    className="min-h-[120px] border-primary/30 focus:border-primary resize-none"
+                    placeholder="Course description"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={saveEditing}
+                    size="sm"
+                    disabled={updateCourseMutation.isPending}
+                    className="cursor-pointer"
+                  >
+                    {updateCourseMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Save className="h-3 w-3 mr-1" />
+                    )}
+                    Save Changes
+                  </Button>
+                  <Button onClick={cancelEditing} variant="outline" size="sm" className="cursor-pointer">
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-accent/20 rounded-lg p-4 border border-accent/30">
+                <p className="text-muted-foreground leading-relaxed">{course.description}</p>
               </div>
             )}
+          </div>
 
-            <div className="mt-3 space-y-2">
-              {course.versions?.map((vId: string) => (
-                <VersionCard key={vId} versionId={vId} courseId={courseId} onInvalidate={onInvalidate} deleteVersion={deleteVersion} />
-              ))}
+          {/* All Versions Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">All Versions ({course.versions?.length || 0})</h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={showVersionForm}
+                  size="sm"
+                  variant="outline"
+                  disabled={createVersionMutation.isPending}
+                  className="cursor-pointer"
+                >
+                  {createVersionMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Plus className="h-3 w-3 mr-1" />
+                  )}
+                  New Version
+                </Button>
+              </div>
+            </div>
+
+            {/* New Version Form */}
+            {showNewVersionForm && (
+              <Card className="bg-accent/10 border-2 border-primary/30">
+                <CardContent className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-foreground">Create New Version</h4>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1 block">Version Name</label>
+                      <Input
+                        value={newVersionData.version}
+                        onChange={(e) => setNewVersionData((prev) => ({ ...prev, version: e.target.value }))}
+                        placeholder="e.g., v2.0, Version 2, etc."
+                        className="border-primary/30 focus:border-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1 block">Version Description</label>
+                      <Textarea
+                        value={newVersionData.description}
+                        onChange={(e) => setNewVersionData((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe what's new in this version..."
+                        className="min-h-[80px] border-primary/30 focus:border-primary resize-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        onClick={saveNewVersion}
+                        size="sm"
+                        disabled={createVersionMutation.isPending}
+                        className="cursor-pointer"
+                      >
+                        {createVersionMutation.isPending ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3 mr-1" />
+                        )}
+                        Save Version
+                      </Button>
+                      <Button onClick={cancelNewVersion} variant="outline" size="sm" className="cursor-pointer">
+                        <X className="h-3 w-3 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Display All Versions */}
+            <div className="space-y-3">
+              {course.versions && course.versions.length > 0 ? (
+                course.versions.map((versionId: string) => (
+                  <VersionCard
+                    key={versionId}
+                    versionId={versionId}
+                    courseId={courseIdHex}
+                    onInvalidate={onInvalidate}
+                    deleteVersionMutation={deleteVersionMutation}
+                  />
+                ))
+              ) : (
+                <Card className="bg-muted/20 border-dashed border-2">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No versions available</p>
+                    <p className="text-sm text-muted-foreground mt-1">Create your first version to get started</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
+
+          
+          <ProctoringModal
+            open={showProctoringModal}
+            onClose={() => setShowProctoringModal(false)}
+            courseId={courseIdHex}
+            courseVersionId={course.versions[0]}
+            isNew={!settingsExist}
+          />
+
+
+
         </CardContent>
       )}
     </Card>
-  );
+  )
 }
 
-function VersionCard({ versionId, courseId, onInvalidate, deleteVersion }: any) {
-  const { data: version, isLoading, error } = useCourseVersionById(versionId);
-  const handleDelete = async () => {
-    if (!confirm("Delete version?")) return;
-    await deleteVersion.mutateAsync({ params: { path: { courseId, versionId } } });
-    onInvalidate();
-  };
-  if (isLoading) return <p>Loading version...</p>;
-  if (error || !version) return <p>Error loading version</p>;
+// Separate component for individual version cards
+function VersionCard({
+  versionId,
+  courseId,
+  onInvalidate,
+  deleteVersionMutation,
+}: {
+  versionId: string
+  courseId: string
+  onInvalidate: () => void
+  deleteVersionMutation: any
+}) {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  // Fetch individual version data
+  const { data: version, isLoading: versionLoading, error: versionError } = useCourseVersionById(versionId)
+
+  const deleteVersion = async () => {
+    if (!confirm("Are you sure you want to delete this version? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      await deleteVersionMutation.mutateAsync({
+        params: { path: { courseId: courseId, versionId: versionId } },
+      })
+
+      // Invalidate the specific version query
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/courses/versions/{id}", { params: { path: { id: versionId } } }],
+      })
+
+      // Invalidate the course query to refresh versions list
+      queryClient.invalidateQueries({
+        queryKey: ["get", "/courses/{id}", { params: { path: { id: courseId } } }],
+      })
+
+      onInvalidate() // Also invalidate parent queries
+    } catch (error) {
+      console.error("Failed to delete version:", error)
+    }
+  }
+
+  const viewEnrollments = () => {
+    // Navigate to enrollments page with courseId and versionId as search parameters
+    navigate({
+      to: "/teacher/courses/enrollments",
+      search: { courseId: courseId, versionId: versionId },
+    })
+  }
+
+  if (versionLoading) {
+    return (
+      <Card className="bg-card/50 border-l-4 border-l-muted">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Loading version...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (versionError || !version) {
+    return (
+      <Card className="bg-card/50 border-l-4 border-l-destructive/40">
+        <CardContent className="p-4">
+          <div className="text-sm text-destructive">Error loading version data</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
-    <div className="p-2 border rounded flex justify-between items-center">
-      <div>
-        <p className="font-semibold">{version.version}</p>
-        <p className="text-sm text-muted-foreground">{version.description}</p>
-      </div>
-      <Button size="sm" variant="outline" onClick={handleDelete} className="text-destructive">
-        <Trash2 className="h-3 w-3 mr-1" /> Delete
-      </Button>
-    </div>
-  );
+    <Card className="bg-card/50 border-l-4 border-l-primary/40 hover:shadow-md transition-all duration-200">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center gap-3">
+              <h4 className="font-semibold text-foreground">{version.version}</h4>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{version.description}</p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={viewEnrollments} className="h-7 text-xs cursor-pointer">
+              <Users className="h-3 w-3 mr-1" />
+              View Enrollments
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs cursor-pointer">
+              <Eye className="h-3 w-3 mr-1" />
+              View
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={deleteVersion}
+              className="h-7 text-xs text-destructive hover:text-destructive cursor-pointer"
+              disabled={deleteVersionMutation.isPending}
+            >
+              {deleteVersionMutation.isPending ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3 mr-1" />
+              )}
+              Delete
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }

@@ -11,7 +11,7 @@ import { useState } from 'react';
 import type { BufferId, LotItem, BaseQuestionRenderView, DescriptiveQuestionRenderView, SelectManyInLotQuestionRenderView, OrderTheLotsQuestionRenderView, NumericAnswerQuestionRenderView, SelectOneInLotQuestionRenderView, QuestionRenderView, SaveQuestion, IQuestionAnswerFeedback, SubmitQuizResponse} from '../types/quiz.types';
 import type { ReportAnomalyBody, ReportAnomalyResponse } from '@/types/reportanomaly.types';
 import type { ProctoringSettings } from '@/types/video.types';
-import { useQuery } from "@tanstack/react-query";
+
 // Auth hooks
 
 // POST /auth/verify

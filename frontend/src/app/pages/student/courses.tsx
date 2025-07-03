@@ -80,7 +80,7 @@ export default function StudentCourses() {
 
   const CourseCard = ({ enrollment, index }: { enrollment: any; index: number }) => {
     const courseId = safeHex(enrollment?.courseId);
-    console.log("courseId:", courseId);
+    
 
     const { data: courseDetails, isLoading: isCourseLoading } = useCourseById(courseId);
     const { setCurrentCourse } = useCourseStore();

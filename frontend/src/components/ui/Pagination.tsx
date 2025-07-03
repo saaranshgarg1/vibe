@@ -6,7 +6,6 @@ export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
-  totalDocuments, //  included as per props type
   className = "", // optional className prop
 }) => {
   if (totalPages <= 1) return null;

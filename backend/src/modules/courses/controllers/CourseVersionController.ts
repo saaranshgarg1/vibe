@@ -24,6 +24,7 @@ import {
   CourseVersionDataResponse,
   ReadCourseVersionParams,
   DeleteCourseVersionParams,
+  DeleteCourseVersionResponse,
 } from '#courses/classes/validators/CourseVersionValidators.js';
 
 @OpenAPI({
@@ -46,7 +47,7 @@ Accessible to:
   @Authorized(['admin', 'instructor'])
   @Post('/:id/versions', {transformResponse: true})
   @HttpCode(201)
-  @ResponseSchema(CreateCourseVersionResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Course version created successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -75,7 +76,7 @@ Accessible to:
   })
   @Authorized(['admin', 'instructor', 'student'])
   @Get('/versions/:id')
-  @ResponseSchema(CourseVersionDataResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Course version retrieved successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -104,7 +105,7 @@ Accessible to:
   })
   @Authorized(['admin', 'instructor'])
   @Delete('/:courseId/versions/:versionId')
-  @ResponseSchema(DeleteCourseVersionParams, {
+  @ResponseSchema(DeleteCourseVersionResponse, {
     description: 'Course version deleted successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -117,7 +118,7 @@ Accessible to:
   })
   async delete(
     @Params() params: DeleteCourseVersionParams,
-  ): Promise<{message: string}> {
+  ): Promise<DeleteCourseVersionResponse> {
     const {courseId, versionId} = params;
     if (!versionId || !courseId) {
       throw new BadRequestError('Version ID is required');

@@ -1,5 +1,5 @@
 import { IUser } from '#root/shared/interfaces/models.js';
-import {IsNotEmpty, IsString, IsEmail} from 'class-validator';
+import {IsNotEmpty, IsString, IsEmail, IsOptional} from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 
 /**
@@ -81,6 +81,7 @@ export class UserByFirebaseUIDResponse implements IUser {
     },
     readOnly: true,
   })
+  @IsOptional()
   roles: string[];
 }
 

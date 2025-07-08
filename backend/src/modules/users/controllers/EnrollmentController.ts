@@ -1,4 +1,5 @@
 
+import { BadRequestErrorResponse } from '#root/shared/index.js';
 import { EnrollmentRole, IEnrollment, IProgress } from '#root/shared/interfaces/models.js';
 import {
   EnrolledUserResponse,
@@ -51,7 +52,7 @@ export class EnrollmentController {
     description: 'User or course version not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid role or User already enrolled',
     statusCode: 400,
   })
@@ -120,7 +121,7 @@ export class EnrollmentController {
     description: 'No enrollments found for the user',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid page or limit parameters',
     statusCode: 400,
   })

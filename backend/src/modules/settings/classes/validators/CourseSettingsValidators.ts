@@ -12,8 +12,9 @@ import {
   registerDecorator,
   ValidationArguments,
   ValidationOptions,
+  ArrayNotEmpty,
 } from 'class-validator';
-import {Type} from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   ICourseSettings,
   IDetectorOptions,
@@ -21,8 +22,8 @@ import {
   ISettings,
   IUserSettings,
 } from '#shared/interfaces/models.js';
-import {JSONSchema} from 'class-validator-jsonschema';
-import {ProctoringComponent} from '#shared/database/interfaces/ISettingsRepository.js';
+import { JSONSchema } from 'class-validator-jsonschema';
+import { ProctoringComponent } from '#shared/database/interfaces/ISettingsRepository.js';
 
 /**
  * This file contains classes and DTOs for validating course and user settings related to proctoring.
@@ -31,21 +32,35 @@ import {ProctoringComponent} from '#shared/database/interfaces/ISettingsReposito
 
 export class DetectorOptionsDto implements IDetectorOptions {
   @IsBoolean()
+  @JSONSchema({
+    description: 'Whether the detector is enabled',
+    example: true,
+  })
   enabled: boolean;
 }
 
 export class DetectorSettingsDto implements IDetectorSettings {
+  @JSONSchema({
+    description: 'The detector type',
+    example: ProctoringComponent.CAMERAMICRO,
+  })
   @IsNotEmpty()
   @IsEnum(ProctoringComponent)
   detectorName: ProctoringComponent;
+
+  @JSONSchema({
+    description: 'Configuration options for the detector',
+    example: { enabled: true },
+  })
   @IsNotEmpty()
+  @ValidateNested()
   @Type(() => DetectorOptionsDto)
   settings: DetectorOptionsDto;
 }
 
 export class ProctoringSettingsDto {
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => DetectorSettingsDto)
   detectors: DetectorSettingsDto[];
 }
@@ -56,10 +71,9 @@ export class SettingsDto {
   proctors: ProctoringSettingsDto;
 }
 
-@ValidatorConstraint({async: false})
+@ValidatorConstraint({ async: false })
 export class containsAllDetectorsConstraint
-  implements ValidatorConstraintInterface
-{
+  implements ValidatorConstraintInterface {
   validate(value: Array<any>, args: ValidationArguments) {
     if (!Array.isArray(value)) {
       return false;
@@ -94,7 +108,6 @@ export function containsAllDetectors(validationOptions?: ValidationOptions) {
 // This class represents the validation schema for creating course settings.
 export class CreateCourseSettingsBody implements Partial<ICourseSettings> {
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -105,7 +118,6 @@ export class CreateCourseSettingsBody implements Partial<ICourseSettings> {
   courseVersionId: string;
 
   @JSONSchema({
-    title: 'Course Id',
     description: 'Id of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -123,7 +135,6 @@ export class CreateCourseSettingsBody implements Partial<ICourseSettings> {
 // This class represents the validation schema for reading course settings.
 export class ReadCourseSettingsParams {
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -134,7 +145,6 @@ export class ReadCourseSettingsParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -148,7 +158,6 @@ export class ReadCourseSettingsParams {
 // This class represents the validation schema of Prameters for adding proctoring to a course.
 export class AddCourseProctoringParams {
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -159,7 +168,6 @@ export class AddCourseProctoringParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -172,16 +180,8 @@ export class AddCourseProctoringParams {
 
 // This class represents the validation schema of body for adding proctoring to a course.
 export class AddCourseProctoringBody {
-  @JSONSchema({
-    title: 'Proctoring Component',
-    description: 'Component to add to course proctoring',
-    enum: Object.values(ProctoringComponent),
-    example: ProctoringComponent.CAMERAMICRO,
-  })
-  @IsArray()
-  @IsNotEmpty()
-  @ValidateNested({each: true})
-  @containsAllDetectors()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
   @Type(() => DetectorSettingsDto)
   detectors: DetectorSettingsDto[];
 }
@@ -189,7 +189,6 @@ export class AddCourseProctoringBody {
 // This class represents the validation schema of Parameters for removing proctoring from a course.
 export class RemoveCourseProctoringParams {
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -200,7 +199,6 @@ export class RemoveCourseProctoringParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -214,7 +212,6 @@ export class RemoveCourseProctoringParams {
 // This class represents the validation schema of body for removing proctoring from a course.
 export class RemoveCourseProctoringBody {
   @JSONSchema({
-    title: 'Proctoring Component',
     description: 'Component to remove from course proctoring',
     enum: Object.values(ProctoringComponent),
     example: ProctoringComponent.CAMERAMICRO,
@@ -227,7 +224,6 @@ export class RemoveCourseProctoringBody {
 // This class represents the validation schema for creating user settings.
 export class CreateUserSettingsBody implements Partial<IUserSettings> {
   @JSONSchema({
-    title: 'Student ID',
     description: 'ID of the student',
     example: '60d5ec49b3f1c8e4a8f8b8c5',
     type: 'string',
@@ -238,7 +234,6 @@ export class CreateUserSettingsBody implements Partial<IUserSettings> {
   studentId: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -249,7 +244,6 @@ export class CreateUserSettingsBody implements Partial<IUserSettings> {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -266,7 +260,6 @@ export class CreateUserSettingsBody implements Partial<IUserSettings> {
 
 export class ReadUserSettingsParams {
   @JSONSchema({
-    title: 'Student ID',
     description: 'ID of the student',
     example: '60d5ec49b3f1c8e4a8f8b8c5',
     type: 'string',
@@ -277,7 +270,6 @@ export class ReadUserSettingsParams {
   studentId: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -288,7 +280,6 @@ export class ReadUserSettingsParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -302,7 +293,6 @@ export class ReadUserSettingsParams {
 // This class represents the validation schema of Parameters for adding proctoring to a user Setting.
 export class AddUserProctoringParams {
   @JSONSchema({
-    title: 'Student ID',
     description: 'ID of the student',
     example: '60d5ec49b3f1c8e4a8f8b8c5',
     type: 'string',
@@ -313,7 +303,6 @@ export class AddUserProctoringParams {
   studentId: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -324,7 +313,6 @@ export class AddUserProctoringParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -337,16 +325,8 @@ export class AddUserProctoringParams {
 
 // This class represents the validation schema of body for adding proctoring to a user Setting.
 export class AddUserProctoringBody {
-  @JSONSchema({
-    title: 'Proctoring Component',
-    description: 'Component to add to user proctoring',
-    enum: Object.values(ProctoringComponent),
-    example: ProctoringComponent.CAMERAMICRO,
-  })
-  @IsArray()
-  @IsNotEmpty()
-  @ValidateNested({each: true})
-  @containsAllDetectors()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
   @Type(() => DetectorSettingsDto)
   detectors: DetectorSettingsDto[];
 }
@@ -354,7 +334,6 @@ export class AddUserProctoringBody {
 // This class represents the validation schema of Parameters for removing proctoring from a user Setting.
 export class RemoveUserProctoringParams {
   @JSONSchema({
-    title: 'Student ID',
     description: 'ID of the student',
     example: '60d5ec49b3f1c8e4a8f8b8c5',
     type: 'string',
@@ -365,7 +344,6 @@ export class RemoveUserProctoringParams {
   studentId: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -376,7 +354,6 @@ export class RemoveUserProctoringParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -389,7 +366,6 @@ export class RemoveUserProctoringParams {
 
 export class RemoveUserProctoringBody {
   @JSONSchema({
-    title: 'Proctoring Component',
     description: 'Component to remove from user proctoring',
     enum: Object.values(ProctoringComponent),
     example: ProctoringComponent.CAMERAMICRO,

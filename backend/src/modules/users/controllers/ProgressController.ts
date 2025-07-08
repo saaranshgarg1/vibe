@@ -31,6 +31,7 @@ import {
 } from 'routing-controllers';
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import { UserNotFoundErrorResponse } from '../classes/validators/UserValidators.js';
+import { BadRequestErrorResponse, InternalServerErrorResponse } from '#root/shared/index.js';
 
 @OpenAPI({
   tags: ['Progress'],
@@ -83,7 +84,7 @@ class ProgressController {
     description: 'Progress not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
     statusCode: 400,
   })
@@ -118,11 +119,11 @@ class ProgressController {
     description: 'Progress not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
     statusCode: 400,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Failed to stop tracking item',
     statusCode: 500,
   })
@@ -154,11 +155,11 @@ class ProgressController {
     description: 'Progress not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
     statusCode: 400,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Progress could not be updated',
     statusCode: 500,
   })
@@ -195,7 +196,7 @@ If none are provided, resets to the beginning of the course.`,
     description: 'User not found',
     statusCode: 404,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Progress could not be reset',
     statusCode: 500,
   })

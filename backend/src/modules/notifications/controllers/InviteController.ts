@@ -139,7 +139,7 @@ export class InviteController {
   ): Promise<MessageResponse> {
     const { inviteId } = params;
     return this.inviteService.cancelInvite(inviteId);
-  } 
+  }
 }
 
 

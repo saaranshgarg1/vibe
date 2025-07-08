@@ -23,7 +23,6 @@ import {ObjectId} from 'mongodb';
 class CourseSettings implements ICourseSettings {
   @Expose()
   @JSONSchema({
-    title: 'Course Settings ID',
     description: 'Unique identifier for the course settings',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -34,7 +33,6 @@ class CourseSettings implements ICourseSettings {
 
   @Expose()
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
@@ -45,7 +43,6 @@ class CourseSettings implements ICourseSettings {
 
   @Expose()
   @JSONSchema({
-    title: 'Course ID',
     description: 'Id of the course',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -56,7 +53,6 @@ class CourseSettings implements ICourseSettings {
 
   @Expose()
   @JSONSchema({
-    title: 'Settings',
     description: 'Settings for the course',
     type: 'object',
     properties: {

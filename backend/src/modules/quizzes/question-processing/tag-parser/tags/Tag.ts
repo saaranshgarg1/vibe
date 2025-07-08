@@ -1,4 +1,4 @@
-import {IQuestionParameter} from '#shared/interfaces/quiz.js';
+import { IQuestionParameter } from '#shared/interfaces/quiz.js';
 
 type ParameterMap = Record<string, string | number>;
 abstract class Tag {
@@ -7,4 +7,4 @@ abstract class Tag {
   abstract process(text: string, context: ParameterMap): string;
 }
 
-export {Tag, ParameterMap};
+export { Tag, ParameterMap };

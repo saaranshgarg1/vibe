@@ -52,7 +52,7 @@ Accessible to:
   @Authorized(['admin'])
   @Post('/versions/:versionId/modules/:moduleId/sections')
   @HttpCode(201)
-  @ResponseSchema(SectionDataResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Section created successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -93,7 +93,7 @@ Accessible to:
   })
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId/sections/:sectionId')
-  @ResponseSchema(SectionDataResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Section updated successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -137,7 +137,7 @@ Accessible to:
   })
   @Authorized(['admin'])
   @Put('/versions/:versionId/modules/:moduleId/sections/:sectionId/move')
-  @ResponseSchema(SectionDataResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Section moved successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {

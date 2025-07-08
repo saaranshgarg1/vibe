@@ -143,6 +143,7 @@ export function generateOpenAPISpec(
 
   // Create OpenAPI specification
   const spec = routingControllersToSpec(storage, routingControllersOptions, {
+    openapi: '3.1.0',
     info: {
       title: 'ViBe API Documentation',
       version: '1.0.0',

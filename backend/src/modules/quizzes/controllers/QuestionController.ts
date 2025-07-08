@@ -28,6 +28,7 @@ import {
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {QUIZZES_TYPES} from '#quizzes/types.js';
 import {QuestionProcessor} from '#quizzes/question-processing/QuestionProcessor.js';
+import { BadRequestErrorResponse } from '#root/shared/index.js';
 import { QuestionActions, getQuestionAbility } from '../abilities/questionAbilities.js';
 import { subject } from '@casl/ability';
 
@@ -53,7 +54,7 @@ class QuestionController {
     description: 'Question created successfully',
     statusCode: 201,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Question creation failed due to invalid body',
     statusCode: 400,
   })
@@ -84,7 +85,7 @@ class QuestionController {
   @ResponseSchema(QuestionResponse, {
     description: 'Question retrieved successfully',
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid question id',
     statusCode: 400,
   })
@@ -144,7 +145,7 @@ class QuestionController {
   @Authorized()
   @Delete('/:questionId')
   @OnUndefined(204)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid question id',
     statusCode: 400,
   })

@@ -6,13 +6,14 @@ import {
   IsOptional,
   IsMongoId,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 import {AtLeastOne, OnlyOneId} from './customValidators.js';
+import { Type } from 'class-transformer';
 
 class CreateSectionBody implements Partial<ISection> {
   @JSONSchema({
-    title: 'Section Name',
     description: 'Name/title of the section',
     example: 'Introduction to Algorithms',
     type: 'string',
@@ -24,7 +25,6 @@ class CreateSectionBody implements Partial<ISection> {
   name: string;
 
   @JSONSchema({
-    title: 'Section Description',
     description: 'Description or purpose of the section',
     example:
       'This section covers fundamental algorithmic concepts including time complexity and space complexity.',
@@ -37,11 +37,10 @@ class CreateSectionBody implements Partial<ISection> {
   description: string;
 
   @JSONSchema({
-    title: 'After Section ID',
     description: 'Optional: Place the new section after this section ID',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -53,11 +52,10 @@ class CreateSectionBody implements Partial<ISection> {
   afterSectionId?: string;
 
   @JSONSchema({
-    title: 'Before Section ID',
     description: 'Optional: Place the new section before this section ID',
     example: '60d5ec49b3f1c8e4a8f8b8c4',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -67,7 +65,6 @@ class CreateSectionBody implements Partial<ISection> {
 
 class UpdateSectionBody implements Partial<ISection> {
   @JSONSchema({
-    title: 'Section Name',
     description: 'Updated name of the section',
     example: 'Advanced Algorithms',
     type: 'string',
@@ -79,7 +76,6 @@ class UpdateSectionBody implements Partial<ISection> {
   name: string;
 
   @JSONSchema({
-    title: 'Section Description',
     description: 'Updated description of the section',
     example:
       'This section covers advanced algorithmic concepts including dynamic programming and greedy algorithms.',
@@ -94,11 +90,10 @@ class UpdateSectionBody implements Partial<ISection> {
 
 class MoveSectionBody {
   @JSONSchema({
-    title: 'After Section ID',
     description: 'Move the section after this section ID',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -110,11 +105,10 @@ class MoveSectionBody {
   afterSectionId?: string;
 
   @JSONSchema({
-    title: 'Before Section ID',
     description: 'Move the section before this section ID',
     example: '60d5ec49b3f1c8e4a8f8b8c4',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -124,10 +118,9 @@ class MoveSectionBody {
 
 class VersionModuleSectionParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version containing the module',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -135,10 +128,9 @@ class VersionModuleSectionParams {
   versionId: string;
 
   @JSONSchema({
-    title: 'Module ID',
     description: 'ID of the module containing the section',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -146,10 +138,9 @@ class VersionModuleSectionParams {
   moduleId: string;
 
   @JSONSchema({
-    title: 'Section ID',
     description: 'ID of the section',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -181,13 +172,14 @@ class SectionNotFoundErrorResponse {
 
 class SectionDeletedResponse {
   @JSONSchema({
-    description: 'Deletion confirmation message',
+    description: 'Success message for deleted section',
     example:
       'Section with the ID 60d5ec49b3f1c8e4a8f8b8e6 in Version 60d5ec49b3f1c8e4a8f8b8d5 has been deleted successfully.',
     type: 'string',
     readOnly: true,
   })
   @IsNotEmpty()
+  @IsString()
   message: string;
 }
 

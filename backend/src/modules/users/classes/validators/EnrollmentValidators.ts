@@ -8,6 +8,7 @@ import {
   IsInt,
   IsArray,
   ValidateNested,
+  IsDateString,
 } from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 import {ProgressDataResponse} from './ProgressValidators.js';
@@ -21,7 +22,7 @@ export class EnrollmentParams {
   @JSONSchema({
     description: 'User ID of the student to enroll',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -31,7 +32,7 @@ export class EnrollmentParams {
   @JSONSchema({
     description: 'ID of the course to enroll in',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -41,7 +42,7 @@ export class EnrollmentParams {
   @JSONSchema({
     description: 'ID of the specific course version to enroll in',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -66,7 +67,7 @@ export class EnrollmentDataResponse {
     description: 'Unique identifier for the enrollment record',
     example: '60d5ec49b3f1c8e4a8f8b8d2',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
     readOnly: true,
   })
   @IsString()
@@ -77,7 +78,7 @@ export class EnrollmentDataResponse {
     description: 'User ID associated with this enrollment',
     example: '60d5ec49b3f1c8e4a8f8b8c1',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsNotEmpty()
   @IsString()
@@ -88,7 +89,7 @@ export class EnrollmentDataResponse {
     description: 'Course ID associated with this enrollment',
     example: '60d5ec49b3f1c8e4a8f8b8c2',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsNotEmpty()
   @IsString()
@@ -99,7 +100,7 @@ export class EnrollmentDataResponse {
     description: 'Course version ID associated with this enrollment',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsNotEmpty()
   @IsString()
@@ -133,8 +134,7 @@ export class EnrollmentDataResponse {
     format: 'date-time',
   })
   @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
+  @IsDateString()
   enrollmentDate: Date;
 }
 
@@ -193,7 +193,7 @@ export class EnrolledUserResponseData {
 
 export class EnrollmentResponse {
   @JSONSchema({
-    description: 'Total number of documents in the response',
+    description: 'Total number of enrollment records available across all pages.',
     example: 100,
     type: 'integer',
   })
@@ -202,7 +202,7 @@ export class EnrollmentResponse {
   totalDocuments: number;
 
   @JSONSchema({
-    description: 'Total number of pages in the response',
+    description: 'Total number of pages based on the current pagination settings.',
     example: 10,
     type: 'integer',
   })
@@ -211,7 +211,7 @@ export class EnrollmentResponse {
   totalPages: number;
 
   @JSONSchema({
-    description: 'Current page number in the response',
+    description: 'The current page number of the paginated enrollment response.',
     example: 1,
     type: 'integer',
   })
@@ -220,13 +220,13 @@ export class EnrollmentResponse {
   currentPage: number;
 
   @JSONSchema({
-    description: 'Array of enrollment data for the user',
+    description: 'List of enrollment records for the current page.',
     type: 'array',
     items: { $ref: '#/components/schemas/EnrollmentDataResponse' },
   })
   @IsNotEmpty()
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => EnrollmentDataResponse)
   enrollments: EnrollmentDataResponse[];
 }

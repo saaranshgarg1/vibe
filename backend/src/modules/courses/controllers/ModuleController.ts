@@ -8,12 +8,12 @@ import {
   MoveModuleBody,
   ModuleDeletedResponse,
 } from '#courses/classes/validators/ModuleValidators.js';
-import {ModuleService} from '#courses/services/ModuleService.js';
+import { ModuleService } from '#courses/services/ModuleService.js';
 import { Ability } from '#root/shared/functions/AbilityDecorator.js';
-import {COURSES_TYPES} from '#courses/types.js';
-import {BadRequestErrorResponse} from '#root/shared/middleware/errorHandler.js';
-import {instanceToPlain} from 'class-transformer';
-import {injectable, inject} from 'inversify';
+import { COURSES_TYPES } from '#courses/types.js';
+import { BadRequestErrorResponse } from '#root/shared/middleware/errorHandler.js';
+import { instanceToPlain } from 'class-transformer';
+import { injectable, inject } from 'inversify';
 import {
   JsonController,
   Post,
@@ -25,7 +25,8 @@ import {
   ForbiddenError,
   Authorized,
 } from 'routing-controllers';
-import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+import { CourseVersion } from '../classes/index.js';
 import { CourseVersionActions, getCourseVersionAbility } from '../abilities/versionAbilities.js';
 import { subject } from '@casl/ability';
 
@@ -38,7 +39,7 @@ export class ModuleController {
   constructor(
     @inject(COURSES_TYPES.ModuleService)
     private service: ModuleService,
-  ) {}
+  ) { }
 
   @OpenAPI({
     summary: 'Create a module',
@@ -64,7 +65,7 @@ Accessible to:
     @Params() params: CreateModuleParams,
     @Body() body: CreateModuleBody,
     @Ability(getCourseVersionAbility) {ability}
-  ) {
+  ): Promise<ModuleDataResponse> {
     const { versionId } = params;
     
     // Build the subject context first
@@ -75,7 +76,11 @@ Accessible to:
     }
     
     const updated = await this.service.createModule(params.versionId, body);
-    return {version: instanceToPlain(updated)};
+    return {
+      version: instanceToPlain(
+        Object.assign(new CourseVersion(), updated),
+      ) as CourseVersion
+    };
   }
 
   @OpenAPI({
@@ -101,7 +106,7 @@ Accessible to:
     @Params() params: VersionModuleParams,
     @Body() body: UpdateModuleBody,
     @Ability(getCourseVersionAbility) {ability}
-  ) {
+  ): Promise<ModuleDataResponse> {
     const { versionId, moduleId } = params;
     
     // Build the subject context first
@@ -116,7 +121,11 @@ Accessible to:
       moduleId,
       body,
     );
-    return {version: instanceToPlain(updated)};
+    return {
+      version: instanceToPlain(
+        Object.assign(new CourseVersion(), updated),
+      ) as CourseVersion
+    };
   }
 
   @OpenAPI({
@@ -142,7 +151,7 @@ Accessible to:
     @Params() params: VersionModuleParams,
     @Body() body: MoveModuleBody,
     @Ability(getCourseVersionAbility) {ability}
-  ) {
+  ): Promise<ModuleDataResponse> {
     const { versionId, moduleId } = params;
     
     // Build the subject context first
@@ -157,7 +166,11 @@ Accessible to:
       moduleId,
       body,
     );
-    return {version: instanceToPlain(updated)};
+    return {
+      version: instanceToPlain(
+        Object.assign(new CourseVersion(), updated),
+      ) as CourseVersion
+    };
   }
 
   @OpenAPI({
@@ -182,7 +195,7 @@ Accessible to:
   async delete(
     @Params() params: VersionModuleParams,
     @Ability(getCourseVersionAbility) {ability}
-  ) {
+  ): Promise<ModuleDeletedResponse> {
     const { versionId, moduleId } = params;
     
     // Build the subject context first

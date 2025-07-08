@@ -1,4 +1,4 @@
-﻿import {QuestionBankRef} from '#quizzes/classes/validators/QuestionBankValidator.js';
+﻿import { QuestionBankRef } from '#quizzes/classes/validators/QuestionBankValidator.js';
 import {
   QuizIdParam,
   AddQuestionBankBody,
@@ -22,10 +22,11 @@ import {
   GetAllSubmissionsResponse,
   QuizNotFoundErrorResponse,
   GetAllQuestionBanksResponse,
+  SubmissionResponse,
 } from '#quizzes/classes/validators/QuizValidator.js';
-import { Ability } from '#root/shared/functions/AbilityDecorator.js';
-import {QuizService} from '#quizzes/services/QuizService.js';
-import {injectable, inject} from 'inversify';
+import {  Ability  } from '#root/shared/functions/AbilityDecorator.js';
+import { QuizService } from '#quizzes/services/QuizService.js';
+import { injectable, inject } from 'inversify';
 import {
   JsonController,
   Post,
@@ -40,9 +41,11 @@ import {
   ForbiddenError,
   Authorized,
 } from 'routing-controllers';
-import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
-import {QUIZZES_TYPES} from '#quizzes/types.js';
-import {ISubmission} from '#quizzes/interfaces/index.js';
+import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+import { QUIZZES_TYPES } from '#quizzes/types.js';
+import { ISubmission } from '#quizzes/interfaces/index.js';
+import { BadRequestErrorResponse } from '#root/shared/index.js';
+import { instanceToPlain } from 'class-transformer';
 import { QuizActions, getQuizAbility } from '../abilities/quizAbilities.js';
 import { subject } from '@casl/ability';
 import { COURSES_TYPES } from '#root/modules/courses/types.js';
@@ -73,7 +76,7 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request body or parameters',
     statusCode: 400,
   })
@@ -132,7 +135,7 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request body or parameters',
     statusCode: 400,
   })
@@ -171,7 +174,7 @@ class QuizController {
   async getAllQuestionBanks(
     @Params() params: QuizIdParam,
     @Ability(getQuizAbility) {ability}
-  ): Promise<QuestionBankRef[]> {
+  ): Promise<GetAllQuestionBanksResponse> {
     const {quizId} = params;
     const courseInfo = await this.itemService.getCourseAndVersionByItemId(quizId);
     // Build the subject context first
@@ -191,7 +194,7 @@ class QuizController {
   @Authorized()
   @Get('/:quizId/user/:userId')
   @HttpCode(200)
-  @ResponseSchema(UserQuizMetricsResponse, { 
+  @ResponseSchema(UserQuizMetricsResponse, {
     description: 'User quiz metrics',
     statusCode: 200,
   })
@@ -199,7 +202,7 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request parameters',
     statusCode: 400,
   })
@@ -226,7 +229,7 @@ class QuizController {
   @Authorized()
   @Get('/:quizId/attempts/:attemptId')
   @HttpCode(200)
-  @ResponseSchema(QuizAttemptResponse, { 
+  @ResponseSchema(QuizAttemptResponse, {
     description: 'Quiz attempt details',
     statusCode: 200,
   })
@@ -293,14 +296,14 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request parameters',
     statusCode: 400,
   })
   async getAllSubmissions(
     @Params() params: QuizIdParam,
     @Ability(getQuizAbility) {ability}
-  ): Promise<ISubmission[]> {
+  ): Promise<GetAllSubmissionsResponse> {
     const {quizId} = params;
     const courseInfo = await this.itemService.getCourseAndVersionByItemId(quizId);
     // Build the subject context first
@@ -310,7 +313,10 @@ class QuizController {
       throw new ForbiddenError('You do not have permission to view quiz submissions');
     }
     
-    return await this.quizService.getAllSubmissions(quizId);
+    const result = await this.quizService.getAllSubmissions(quizId);
+    return {
+      submissions: instanceToPlain(result) as SubmissionResponse[]
+    }
   }
 
   @OpenAPI({
@@ -383,7 +389,7 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request parameters',
     statusCode: 400,
   })
@@ -419,7 +425,7 @@ class QuizController {
     description: 'Quiz not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid request parameters',
     statusCode: 400,
   })
@@ -480,7 +486,7 @@ class QuizController {
   @Authorized()
   @Post('/:quizId/submission/:submissionId/score/:score')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid submission ID or score',
     statusCode: 400,
   })
@@ -511,7 +517,7 @@ class QuizController {
   @Authorized()
   @Post('/:quizId/submission/:submissionId/regrade')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid submission ID or regrade data',
     statusCode: 400,
   })
@@ -543,7 +549,7 @@ class QuizController {
   @Authorized()
   @Post('/:quizId/submission/:submissionId/question/:questionId/feedback')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid submission ID or question ID',
     statusCode: 400,
   })

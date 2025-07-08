@@ -1,5 +1,6 @@
 import { IUser } from '#root/shared/interfaces/models.js';
 import {IsNotEmpty, IsString, IsEmail, IsOptional} from 'class-validator';
+import {IsNotEmpty, IsString, IsEmail, IsOptional} from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 import { ObjectId } from 'mongodb';
 

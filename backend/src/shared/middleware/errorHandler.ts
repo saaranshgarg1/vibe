@@ -60,7 +60,6 @@ class ValidationErrorResponse {
     readOnly: true,
   })
   @IsString() // Ensures 'property' is a string
-  @IsDefined() // Makes 'property' a required field
   property!: string;
 
   @JSONSchema({
@@ -68,6 +67,7 @@ class ValidationErrorResponse {
     description: 'The value that failed validation.',
     readOnly: true,
   })
+  @IsObject()
   value: any;
 
   @JSONSchema({
@@ -82,11 +82,10 @@ class ValidationErrorResponse {
     type: 'array',
     format: 'ValidationErrorResponse',
     description: 'Contains all nested validation errors of the property.',
+    items: { $ref: '#/components/schemas/ValidationErrorResponse' },
     readOnly: true,
   })
-  @IsArray() // Ensures 'children' is an array
-  @ValidateNested({each: true})
-  @Type(()=>ValidationErrorResponse) // Ensures each element inside 'children' is validated
+  @IsOptional()
   children!: ValidationErrorResponse[];
 
   @JSONSchema({
@@ -110,6 +109,25 @@ class DefaultErrorResponse {
 }
 
 class BadRequestErrorResponse {
+  @JSONSchema({
+    type: 'string',
+    description: 'The error message.',
+    readOnly: true,
+  })
+  @IsString()
+  message!: string;
+
+  @JSONSchema({
+    type: 'object',
+    description: 'The error details.',
+    readOnly: true,
+  })
+  @IsObject()
+  @ValidateNested()
+  errors?: ValidationErrorResponse;
+}
+
+class InternalServerErrorResponse {
   @JSONSchema({
     type: 'string',
     description: 'The error message.',
@@ -231,4 +249,4 @@ export class HttpErrorHandler implements ExpressErrorMiddlewareInterface {
   }
 }
 
-export {DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse};
+export {DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse, InternalServerErrorResponse};

@@ -1,10 +1,12 @@
-import {ICourseVersion} from '#root/shared/interfaces/models.js';
-import {IsEmpty, IsNotEmpty, IsString, IsMongoId} from 'class-validator';
-import {JSONSchema} from 'class-validator-jsonschema';
+import { ICourseVersion } from '#root/shared/interfaces/models.js';
+import { IsEmpty, IsNotEmpty, IsString, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
+import { JSONSchema } from 'class-validator-jsonschema';
+import { Course } from '../transformers/Course.js';
+import { Type } from 'class-transformer';
+import { CourseVersion } from '../transformers/CourseVersion.js';
 
 class CreateCourseVersionBody implements Partial<ICourseVersion> {
   @JSONSchema({
-    title: 'Version Label',
     description: 'The version label or identifier (e.g., v1.0, Fall 2025)',
     example: 'v1.0',
     type: 'string',
@@ -14,7 +16,6 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
   version: string;
 
   @JSONSchema({
-    title: 'Version Description',
     description: 'A brief description of the course version',
     example: 'First release of the course',
     type: 'string',
@@ -26,7 +27,6 @@ class CreateCourseVersionBody implements Partial<ICourseVersion> {
 
 class CreateCourseVersionParams {
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course to attach the new version to',
     type: 'string',
   })
@@ -37,7 +37,6 @@ class CreateCourseVersionParams {
 
 class ReadCourseVersionParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version to retrieve',
     type: 'string',
   })
@@ -46,9 +45,20 @@ class ReadCourseVersionParams {
   versionId: string;
 }
 
+class DeleteCourseVersionResponse {
+  @JSONSchema({
+    description: 'Success message after deletion',
+    type: 'string',
+  })
+  @Type(() => String)
+  @ValidateNested()
+  @IsString()
+  @IsNotEmpty()
+  message: string;
+}
+
 class DeleteCourseVersionParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version to delete',
     type: 'string',
   })
@@ -57,7 +67,6 @@ class DeleteCourseVersionParams {
   versionId: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course to which the version belongs',
     type: 'string',
   })
@@ -73,6 +82,7 @@ class CourseVersionDataResponse {
     type: 'string',
     readOnly: true,
   })
+  @IsOptional()
   id: string;
 
   @JSONSchema({
@@ -133,6 +143,7 @@ class CourseVersionNotFoundErrorResponse {
     type: 'string',
     readOnly: true,
   })
+  @IsOptional()
   message: string;
 
   @JSONSchema({
@@ -145,19 +156,10 @@ class CourseVersionNotFoundErrorResponse {
 }
 
 class CreateCourseVersionResponse {
-  @JSONSchema({
-    description: 'The updated course object',
-    type: 'object',
-    readOnly: true,
-  })
-  course: Record<string, any>;
-
-  @JSONSchema({
-    description: 'The created version object',
-    type: 'object',
-    readOnly: true,
-  })
-  version: Record<string, any>;
+  @ValidateNested()
+  @Type(() => CourseVersion)
+  @IsOptional()
+  version: CourseVersion;
 }
 
 export {
@@ -165,6 +167,7 @@ export {
   CreateCourseVersionParams,
   ReadCourseVersionParams,
   DeleteCourseVersionParams,
+  DeleteCourseVersionResponse,
   CourseVersionDataResponse,
   CourseVersionNotFoundErrorResponse,
   CreateCourseVersionResponse,
@@ -175,6 +178,7 @@ export const COURSEVERSION_VALIDATORS = [
   CreateCourseVersionParams,
   ReadCourseVersionParams,
   DeleteCourseVersionParams,
+  DeleteCourseVersionResponse,
   CourseVersionDataResponse,
   CourseVersionNotFoundErrorResponse,
   CreateCourseVersionResponse,

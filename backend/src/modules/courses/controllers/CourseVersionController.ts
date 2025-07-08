@@ -26,6 +26,7 @@ import {
   CourseVersionDataResponse,
   ReadCourseVersionParams,
   DeleteCourseVersionParams,
+  DeleteCourseVersionResponse,
 } from '#courses/classes/validators/CourseVersionValidators.js';
 import { CourseVersionActions, getCourseVersionAbility } from '../abilities/versionAbilities.js';
 import { subject } from '@casl/ability';
@@ -50,7 +51,7 @@ Accessible to:
   @Authorized()
   @Post('/:courseId/versions', {transformResponse: true})
   @HttpCode(201)
-  @ResponseSchema(CreateCourseVersionResponse, {
+  @ResponseSchema(CourseVersion, {
     description: 'Course version created successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -86,9 +87,9 @@ Accessible to:
 Accessible to:
 - Users who are part of the course version (students, teaching assistants, instructors, or managers).`,
   })
-  @Authorized()
-  @Get('/versions/:versionId')
-  @ResponseSchema(CourseVersionDataResponse, {
+  @Authorized(['admin', 'instructor', 'student'])
+  @Get('/versions/:id')
+  @ResponseSchema(CourseVersion, {
     description: 'Course version retrieved successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -125,7 +126,7 @@ Accessible to:
   })
   @Authorized()
   @Delete('/:courseId/versions/:versionId')
-  @ResponseSchema(DeleteCourseVersionParams, {
+  @ResponseSchema(DeleteCourseVersionResponse, {
     description: 'Course version deleted successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {
@@ -139,7 +140,7 @@ Accessible to:
   async delete(
     @Params() params: DeleteCourseVersionParams,
     @Ability(getCourseVersionAbility) {ability}
-  ): Promise<{message: string}> {
+  ): Promise<DeleteCourseVersionResponse> {
     const {courseId, versionId} = params;
     if (!versionId || !courseId) {
       throw new BadRequestError('Version ID is required');

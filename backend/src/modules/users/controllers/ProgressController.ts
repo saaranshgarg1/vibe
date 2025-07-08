@@ -35,6 +35,7 @@ import {
 } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { UserNotFoundErrorResponse } from '../classes/validators/UserValidators.js';
+import { BadRequestErrorResponse, InternalServerErrorResponse } from '#root/shared/index.js';
 import { ProgressActions, getProgressAbility } from '../abilities/progressAbilities.js';
 import { WatchTime } from '../classes/transformers/WatchTime.js';
 import { Ability } from '#root/shared/functions/AbilityDecorator.js';
@@ -141,7 +142,7 @@ class ProgressController {
     description: 'Progress not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
     statusCode: 400,
   })
@@ -186,11 +187,11 @@ class ProgressController {
     description: 'Progress not found',
     statusCode: 404,
   })
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
     statusCode: 400,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Failed to stop tracking item',
     statusCode: 500,
   })
@@ -220,6 +221,32 @@ class ProgressController {
       moduleId,
       watchItemId,
     );
+  }
+
+  @OpenAPI({
+    summary: 'Update user progress',
+    description: 'Updates the progress of a user for a specific item in a course version.',
+  })
+  @Patch('/:userId/progress/courses/:courseId/versions/:courseVersionId/update')
+  @OnUndefined(200)
+  @ResponseSchema(ProgressNotFoundErrorResponse, {
+    description: 'Progress not found',
+    statusCode: 404,
+  })
+  @ResponseSchema(BadRequestErrorResponse, {
+    description: 'courseVersionId, moduleId, sectionId, or itemId do not match user progress',
+    statusCode: 400,
+  })
+  @ResponseSchema(InternalServerErrorResponse, {
+    description: 'Progress could not be updated',
+    statusCode: 500,
+  })
+  async updateProgress(
+    @Params() params: UpdateProgressParams,
+    @Body() body: UpdateProgressBody,
+  ): Promise<void> {
+    const {userId, courseId, courseVersionId} = params;
+    const {itemId, moduleId, sectionId, watchItemId, attemptId} = body;
 
     await this.progressService.updateProgress(
       userId,
@@ -248,7 +275,7 @@ If none are provided, resets to the beginning of the course.`,
     description: 'User not found',
     statusCode: 404,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Progress could not be reset',
     statusCode: 500,
   })

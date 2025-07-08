@@ -12,7 +12,6 @@ import {JSONSchema} from 'class-validator-jsonschema';
 
 class CourseBody implements Partial<ICourse> {
   @JSONSchema({
-    title: 'Course Name',
     description: 'Name of the course',
     example: 'Introduction to Programming',
     type: 'string',
@@ -24,7 +23,6 @@ class CourseBody implements Partial<ICourse> {
   name: string;
 
   @JSONSchema({
-    title: 'Course Description',
     description: 'Description of the course',
     example: 'This course covers the basics of programming.',
     type: 'string',
@@ -47,56 +45,53 @@ class CourseIdParams {
 
 class CourseDataResponse implements ICourse {
   @JSONSchema({
-    description: 'Unique identifier for the course',
+    description: 'Course ID',
     type: 'string',
     readOnly: true,
   })
-  @IsNotEmpty()
+  @IsOptional()
   _id?: ID;
 
   @JSONSchema({
-    description: 'Name of the course',
+    description: 'Course name',
     example: 'Introduction to Programming',
     type: 'string',
   })
   @IsNotEmpty()
+  @IsString()
   name: string;
 
   @JSONSchema({
-    description: 'Description of the course',
+    description: 'Course description',
     example: 'This course covers the basics of programming.',
     type: 'string',
   })
   @IsNotEmpty()
+  @IsString()
   description: string;
 
   @JSONSchema({
-    description: 'List of course version IDs',
-    example: ['60d5ec49b3f1c8e4a8f8b8c2', '60d5ec49b3f1c8e4a8f8b8c3'],
+    description: 'Version IDs',
+    example: ['60d5ec49b3f1c8e4a8f8b8c2'],
     type: 'array',
     readOnly: true,
-    items: {
-      type: 'string',
-    },
+    items: { type: 'string' },
   })
   @IsNotEmpty()
   versions: ID[];
 
   @JSONSchema({
-    description: 'List of instructor IDs associated with the course',
-    example: ['60d5ec49b3f1c8e4a8f8b8c4', '60d5ec49b3f1c8e4a8f8b8c5'],
+    description: 'Instructor IDs',
+    example: ['60d5ec49b3f1c8e4a8f8b8c4'],
     type: 'array',
     readOnly: true,
-    items: {
-      type: 'string',
-    },
+    items: { type: 'string' },
   })
   @IsNotEmpty()
   instructors: ID[];
 
   @JSONSchema({
-    title: 'Course Created At',
-    description: 'Timestamp when the course was created',
+    description: 'Created timestamp',
     example: '2023-10-01T12:00:00Z',
     type: 'string',
     format: 'date-time',
@@ -106,8 +101,7 @@ class CourseDataResponse implements ICourse {
   createdAt?: Date | null;
 
   @JSONSchema({
-    title: 'Course Updated At',
-    description: 'Timestamp when the course was last updated',
+    description: 'Last updated timestamp',
     example: '2023-10-01T12:00:00Z',
     type: 'string',
     format: 'date-time',

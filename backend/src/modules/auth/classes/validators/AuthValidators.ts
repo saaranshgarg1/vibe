@@ -115,6 +115,7 @@ class ChangePasswordBody {
     minLength: 8,
     writeOnly: true,
   })
+  @IsString()
   newPassword: string;
 
   @JSONSchema({
@@ -131,6 +132,7 @@ class ChangePasswordBody {
     minLength: 8,
     writeOnly: true,
   })
+  @IsString()
   newPasswordConfirm: string;
 }
 

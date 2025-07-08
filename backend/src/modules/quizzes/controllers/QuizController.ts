@@ -184,7 +184,8 @@ class QuizController {
       throw new ForbiddenError('You do not have permission to view this quiz');
     }
     
-    return await this.quizService.getAllQuestionBanks(quizId);
+    const result = await this.quizService.getAllQuestionBanks(quizId);
+    return { questionBanks: result }
   }
 
   @OpenAPI({

@@ -8,8 +8,10 @@ import {
   ValidateIf,
   IsBoolean,
   IsNumber,
+  IsDateString,
 } from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
+import { WatchTime } from '../transformers/WatchTime.js';
 
 export class GetUserProgressParams {
   @JSONSchema({
@@ -304,6 +306,70 @@ export class UpdateProgressParams {
   @IsString()
   @IsMongoId()
   versionId: string;
+}
+
+export class WatchTimeResponse {
+  @JSONSchema({
+    description: 'Unique identifier for the watch time record',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+  })
+  @IsOptional()
+  _id?: string;
+
+  @JSONSchema({
+    description: 'User ID to track watch time for',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  userId: ID;
+
+  @JSONSchema({
+    description: 'Course ID associated with the watch event',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  courseId: ID;
+
+  @JSONSchema({
+    description: 'Version ID of the course',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  courseVersionId: ID;
+
+  @JSONSchema({
+    description: 'Item ID that is being watched',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  itemId: ID;
+
+  @JSONSchema({
+    description: 'Start time of the watch session',
+    type: 'string',
+    format: 'date-time',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  startTime: Date;
+
+  @JSONSchema({
+    description: 'End time of the watch session',
+    type: 'string',
+    format: 'date-time',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  endTime?: Date;
 }
 
 export class ResetCourseProgressParams {

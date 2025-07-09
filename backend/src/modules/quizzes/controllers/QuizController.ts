@@ -446,39 +446,39 @@ class QuizController {
     return await this.quizService.getQuizResults(quizId);
   }
 
-  @OpenAPI({
-    summary: 'Get flagged questions for a quiz',
-    description: 'Retrieves all flagged questions for a quiz.',
-  })
-  @Authorized()
-  @Get('/:quizId/flagged')
-  @HttpCode(200)
-  @ResponseSchema(FlaggedQuestionResponse, {
-    description: 'Flagged questions',
-    statusCode: 200,
-  })
-  @ResponseSchema(QuizNotFoundErrorResponse, {
-    description: 'Quiz not found',
-    statusCode: 404,
-  })
-  @ResponseSchema(BadRequestError, {
-    description: 'Invalid request parameters',
-    statusCode: 400,
-  })
-  async getFlaggedQues(
-    @Params() params: QuizIdParam,
-    @Ability(getQuizAbility) {ability}
-  ): Promise<FlaggedQuestionResponse> {
-    const {quizId} = params;
-    const courseInfo = await this.itemService.getCourseAndVersionByItemId(quizId);
-    // Build the subject context first
-    const quizSubject = subject('Quiz', { courseId: courseInfo.courseId, versionId: courseInfo.versionId });
+  // @OpenAPI({
+  //   summary: 'Get flagged questions for a quiz',
+  //   description: 'Retrieves all flagged questions for a quiz.',
+  // })
+  // @Authorized()
+  // @Get('/:quizId/flagged')
+  // @HttpCode(200)
+  // @ResponseSchema(FlaggedQuestionResponse, {
+  //   description: 'Flagged questions',
+  //   statusCode: 200,
+  // })
+  // @ResponseSchema(QuizNotFoundErrorResponse, {
+  //   description: 'Quiz not found',
+  //   statusCode: 404,
+  // })
+  // @ResponseSchema(BadRequestErrorResponse, {
+  //   description: 'Invalid request parameters',
+  //   statusCode: 400,
+  // })
+  // async getFlaggedQues(
+  //   @Params() params: QuizIdParam,
+  //   @Ability(getQuizAbility) {ability}
+  // ): Promise<FlaggedQuestionResponse> {
+  //   const {quizId} = params;
+  //   const courseInfo = await this.itemService.getCourseAndVersionByItemId(quizId);
+  //   // Build the subject context first
+  //   const quizSubject = subject('Quiz', { courseId: courseInfo.courseId, versionId: courseInfo.versionId });
     
-    if (!ability.can(QuizActions.View, quizSubject)) {
-      throw new ForbiddenError('You do not have permission to view flagged questions');
-    }
-    return await this.quizService.getFlaggedQuestionsForQuiz(quizId);
-  }
+  //   if (!ability.can(QuizActions.View, quizSubject)) {
+  //     throw new ForbiddenError('You do not have permission to view flagged questions');
+  //   }
+  //   return await this.quizService.getFlaggedQuestionsForQuiz(quizId);
+  // }
 
   @OpenAPI({
     summary: 'Override submission score',
@@ -588,7 +588,7 @@ class QuizController {
   @Authorized()
   @Post('/:quizId/user/:userId/reset-attempts')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid quiz ID or user ID',
     statusCode: 400,
   })

@@ -15,6 +15,7 @@ import {
   WatchTimeParams,
   WatchTimeBody,
   CompletedProgressResponse,
+  WatchTimeResponse,
 } from '#users/classes/validators/ProgressValidators.js';
 import { ProgressService } from '#users/services/ProgressService.js';
 import { USERS_TYPES } from '#users/types.js';
@@ -347,26 +348,27 @@ If none are provided, resets to the beginning of the course.`,
   })
   @Authorized()
   @Get('/:userId/watchTime/item/:itemId/')
-  @OnUndefined(200)
+  @ResponseSchema(WatchTimeResponse, {
+    isArray: true,
+    description: 'User Watch Time retrieved successfully',
+    statusCode: 200,
+  })
   @ResponseSchema(UserNotFoundErrorResponse, {
     description: 'User not found',
     statusCode: 404,
   })
-  @ResponseSchema(InternalServerError, {
+  @ResponseSchema(InternalServerErrorResponse, {
     description: 'Could not Fetch the Watch Time',
     statusCode: 500,
   })
   async getWatchTime(
     @Params() params: WatchTimeParams,
-    @Body() body: WatchTimeBody,
   ): Promise<WatchTime[]> {
     const { userId, itemId } = params;
 
     const watchTime = await this.progressService.getWatchTime(
       userId,
-      itemId,
-      body.courseId,
-      body.versionId,
+      itemId
     )
     return watchTime;
   }

@@ -127,6 +127,25 @@ class BadRequestErrorResponse {
   errors?: ValidationErrorResponse;
 }
 
+class ForbiddenErrorResponse {
+  @JSONSchema({
+    type: 'string',
+    description: 'The error message.',
+    readOnly: true,
+  })
+  @IsString()
+  message!: string;
+
+  @JSONSchema({
+    type: 'object',
+    description: 'The error details.',
+    readOnly: true,
+  })
+  @IsObject()
+  @ValidateNested()
+  errors?: ValidationErrorResponse;
+}
+
 class InternalServerErrorResponse {
   @JSONSchema({
     type: 'string',
@@ -249,4 +268,4 @@ export class HttpErrorHandler implements ExpressErrorMiddlewareInterface {
   }
 }
 
-export {DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse, InternalServerErrorResponse};
+export {DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse, InternalServerErrorResponse, ForbiddenErrorResponse};

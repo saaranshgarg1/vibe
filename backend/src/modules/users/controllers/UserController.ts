@@ -18,6 +18,7 @@ import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {EditUserBody, GetUserParams, GetUserResponse, UserNotFoundErrorResponse } from '../classes/validators/UserValidators.js';
 import { AUTH_TYPES } from '#root/modules/auth/types.js';
 import { IAuthService } from '#root/modules/auth/interfaces/IAuthService.js';
+import { UserResponse } from '#root/modules/auth/classes/index.js';
 
 @OpenAPI({
   tags: ['Users'],
@@ -40,7 +41,7 @@ export class UserController {
   @Authorized()
   @Get('/:userId')
   @HttpCode(200)
-  @ResponseSchema(User, {
+  @ResponseSchema(UserResponse, {
     description: 'User information retrieved successfully',
   })
   @ResponseSchema(UserNotFoundErrorResponse, {

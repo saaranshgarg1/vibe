@@ -28,7 +28,7 @@ import {
 import {OpenAPI, ResponseSchema} from 'routing-controllers-openapi';
 import {QUIZZES_TYPES} from '#quizzes/types.js';
 import {QuestionProcessor} from '#quizzes/question-processing/QuestionProcessor.js';
-import { BadRequestErrorResponse } from '#root/shared/index.js';
+import { BadRequestErrorResponse, ForbiddenErrorResponse } from '#root/shared/index.js';
 import { QuestionActions, getQuestionAbility } from '../abilities/questionAbilities.js';
 import { subject } from '@casl/ability';
 
@@ -177,11 +177,11 @@ class QuestionController {
   @Authorized()
   @Post('/:questionId/flag')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid question id or reason',
     statusCode: 400,
   })
-  @ResponseSchema(ForbiddenError, {
+  @ResponseSchema(ForbiddenErrorResponse, {
     description: 'You do not have permission to flag this question',
     statusCode: 403,
   })
@@ -214,11 +214,11 @@ class QuestionController {
   @Authorized()
   @Post('/flags/:flagId/resolve')
   @OnUndefined(200)
-  @ResponseSchema(BadRequestError, {
+  @ResponseSchema(BadRequestErrorResponse, {
     description: 'Invalid flag id or status',
     statusCode: 400,
   })
-  @ResponseSchema(ForbiddenError, {
+  @ResponseSchema(ForbiddenErrorResponse, {
     description: 'You do not have permission to resolve this flag',
     statusCode: 403,
   })

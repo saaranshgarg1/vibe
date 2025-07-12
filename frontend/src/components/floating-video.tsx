@@ -228,39 +228,42 @@ function FloatingVideo({
     const interval = setInterval(() => {
       let newPenaltyPoints = 0;
       let newPenaltyType = "";
-      setAnomalies(['']);
 
       // Condition 1: If speaking is detected (only if voice detection is enabled)
       if (isSpeaking === "Yes" && isVoiceDetectionEnabled) {
         setRewindVid(true);
         setPauseVid(true);
-        setAnomalies([...anomalies, "voiceDetection"]);
+        if (!anomalies.includes("voiceDetection")) setAnomalies([...anomalies, "voiceDetection"]);
         newPenaltyType = "Speaking";
         newPenaltyPoints += 1;
       }
+      else setAnomalies(anomalies.filter(anomaly => anomaly !== "voiceDetection"));
 
       // Condition 2: If faces count is not exactly 1 (only if face count detection is enabled)
       if (facesCount !== 1 && isFaceCountDetectionEnabled) {
         setRewindVid(true);
         setPauseVid(true);
-        setAnomalies([...anomalies, "faceCountDetection"]);
+        if (!anomalies.includes("faceCountDetection")) setAnomalies([...anomalies, "faceCountDetection"]);
         newPenaltyType = "Faces Count";
         newPenaltyPoints += 1;
       }
+      else setAnomalies(anomalies.filter(anomaly => anomaly !== "faceCountDetection"));
 
       // Condition 3: If the screen is blurred (only if blur detection is enabled)
       if (isBlur === "Yes" && isBlurDetectionEnabled) {
-        setAnomalies([...anomalies, "blurDetection"]);
+        if (!anomalies.includes("blurDetection")) setAnomalies([...anomalies, "blurDetection"]);
         newPenaltyType = "Blur";
         newPenaltyPoints += 1;
       }
+      else setAnomalies(anomalies.filter(anomaly => anomaly !== "blurDetection"));
 
       // Condition 4: If not focused (only if focus tracking is enabled)
       if (!isFocused && isFocusEnabled) {
-        setAnomalies([...anomalies, "focus"]);
+        if (!anomalies.includes("focus")) setAnomalies([...anomalies, "focus"]);
         newPenaltyType = "Focus";
         newPenaltyPoints += 1;
       }
+      else setAnomalies(anomalies.filter(anomaly => anomaly !== "focus"));
       console.log("[anomaly]",anomalies);
 
       // If there are any new penalty points, increment the cumulative score

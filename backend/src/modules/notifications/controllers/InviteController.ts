@@ -192,7 +192,7 @@ export class InviteController {
     }
     
     return this.inviteService.cancelInvite(inviteId);
-  } 
+  }
 }
 
 

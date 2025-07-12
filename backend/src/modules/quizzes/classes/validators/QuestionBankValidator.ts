@@ -107,7 +107,7 @@ class QuestionBankAndQuestionParams {
 class CreateQuestionBankResponse {
   @IsMongoId()
   @JSONSchema({
-    description: 'ID of the created question bank',
+    description: 'Question bank ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -117,7 +117,7 @@ class CreateQuestionBankResponse {
 class QuestionBankResponse implements Partial<IQuestionBank> {
   @IsMongoId()
   @JSONSchema({
-    description: 'ID of the question bank',
+    description: 'Question bank ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -126,7 +126,7 @@ class QuestionBankResponse implements Partial<IQuestionBank> {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the course',
+    description: 'Associated course ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -135,7 +135,7 @@ class QuestionBankResponse implements Partial<IQuestionBank> {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the course version',
+    description: 'Associated course version ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c86',
   })
@@ -144,7 +144,7 @@ class QuestionBankResponse implements Partial<IQuestionBank> {
   @IsArray()
   @IsOptional()
   @JSONSchema({
-    description: 'Array of question IDs',
+    description: 'List of question IDs in the bank',
     type: 'array',
     items: { type: 'string', example: '60d21b4667d0d8992e610c87' },
     example: ['60d21b4667d0d8992e610c87'],
@@ -154,7 +154,7 @@ class QuestionBankResponse implements Partial<IQuestionBank> {
   @IsArray()
   @IsOptional()
   @JSONSchema({
-    description: 'Tags for the question bank',
+    description: 'Tags related to the question bank',
     type: 'array',
     items: { type: 'string', example: 'math' },
     example: ['math', 'science'],
@@ -162,16 +162,18 @@ class QuestionBankResponse implements Partial<IQuestionBank> {
   tags?: string[];
 
   @IsString()
+  @IsNotEmpty()
   @JSONSchema({
-    description: 'Title of the question bank',
+    description: 'Question bank title',
     type: 'string',
     example: 'Algebra Basics',
   })
   title: string;
 
   @IsString()
+  @IsNotEmpty()
   @JSONSchema({
-    description: 'Description of the question bank',
+    description: 'Short description of the question bank',
     type: 'string',
     example: 'A collection of algebra questions.',
   })
@@ -182,7 +184,7 @@ class ReplaceQuestionResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the new question',
+    description: 'New Question Id',
     type: 'string',
     example: '60d21b4667d0d8992e610c88',
   })

@@ -7,10 +7,11 @@ import {
   IQuestionDetails,
   IAttempt,
   ISubmission,
+  IUserQuizMetrics,
 } from '#quizzes/interfaces/grading.js';
-import {IQuestionRenderView, ParameterMap} from '#quizzes/question-processing/index.js';
-import {ItemType, IQuizDetails, IQuestionBankRef} from '#shared/interfaces/models.js';
-import {Type} from 'class-transformer';
+import { ILotItemRenderView, IQuestionRenderView, ParameterMap } from '#quizzes/question-processing/index.js';
+import { ItemType, IQuizDetails, IQuestionBankRef } from '#shared/interfaces/models.js';
+import { Type } from 'class-transformer';
 import {
   IsMongoId,
   IsNotEmpty,
@@ -23,18 +24,22 @@ import {
   IsDateString,
   IsDate,
   IsBoolean,
+  ArrayNotEmpty,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
-import {JSONSchema} from 'class-validator-jsonschema';
-import {ObjectId} from 'mongodb';
-import {QuestionBankRef} from '../transformers/QuestionBank.js';
-import {QuestionType} from '#root/shared/interfaces/quiz.js';
+import { JSONSchema } from 'class-validator-jsonschema';
+import { ObjectId } from 'mongodb';
+import { QuestionBankRef } from '../transformers/QuestionBank.js';
+import { QuestionType } from '#root/shared/interfaces/quiz.js';
 import { Question } from './QuestionValidator.js';
 
 class QuestionAnswerFeedback implements IQuestionAnswerFeedback {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the question',
+    description: 'Question ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c02',
   })
@@ -43,7 +48,7 @@ class QuestionAnswerFeedback implements IQuestionAnswerFeedback {
   @IsEnum(['CORRECT', 'INCORRECT', 'PARTIAL'])
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Status of the answer',
+    description: 'Answer status',
     type: 'string',
     enum: ['CORRECT', 'INCORRECT', 'PARTIAL'],
     example: 'CORRECT',
@@ -53,7 +58,7 @@ class QuestionAnswerFeedback implements IQuestionAnswerFeedback {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Score for the answer',
+    description: 'Score awarded',
     type: 'number',
     example: 5,
   })
@@ -62,11 +67,11 @@ class QuestionAnswerFeedback implements IQuestionAnswerFeedback {
   @IsOptional()
   @IsString()
   @JSONSchema({
-    description: 'Feedback for the answer',
+    description: 'Answer feedback',
     type: 'string',
     example: 'Good job! You answered correctly.',
   })
-  answerFeedback?: string; // Optional feedback for the answer
+  answerFeedback?: string;
 }
 
 // Request Schemas
@@ -124,7 +129,7 @@ class SubmitAttemptParams {
 class GetAttemptResponse implements IAttempt {
   @IsMongoId()
   @JSONSchema({
-    description: 'ID of the attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
@@ -133,7 +138,7 @@ class GetAttemptResponse implements IAttempt {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the quiz',
+    description: 'Quiz ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -142,47 +147,47 @@ class GetAttemptResponse implements IAttempt {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the user',
+    description: 'User ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
   userId: string | ObjectId;
 
   @IsNotEmpty()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionDetails)
   @JSONSchema({
-    description: 'List of question details in the quiz',
+    description: 'Details of questions in the attempt',
     type: 'array',
     items: { $ref: '#/components/schemas/QuestionDetails' },
     example: [{ questionId: '60d21b4667d0d8992e610c02' }],
   })
-  questionDetails: IQuestionDetails[];
+  questionDetails: QuestionDetails[];
 
   @IsOptional()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionAnswer)
   @JSONSchema({
-    description: 'Answers for the attempt',
+    description: 'Submitted answers',
     type: 'array',
     items: { $ref: '#/components/schemas/QuestionAnswer' },
   })
-  answers?: IQuestionAnswer[];
+  answers?: QuestionAnswer[];
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Creation date',
+    description: 'Attempt creation time',
     type: 'string',
     format: 'date-time',
     example: '2024-06-18T12:00:00.000Z',
   })
   createdAt: Date;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Last update date',
+    description: 'Last update time',
     type: 'string',
     format: 'date-time',
     example: '2024-06-18T12:30:00.000Z',
@@ -203,7 +208,7 @@ class SOLAnswer {
 
 class SMLAnswer {
   @IsArray()
-  @IsMongoId({each: true})
+  @IsMongoId({ each: true })
   @IsNotEmpty()
   @JSONSchema({
     description: 'IDs of the selected lot items',
@@ -236,7 +241,7 @@ class Order {
 
 class OTLAnswer {
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => Order)
   @IsNotEmpty()
   @JSONSchema({
@@ -306,27 +311,27 @@ class QuestionAnswer implements IQuestionAnswer {
   @JSONSchema({
     description: 'Answer for the question',
     oneOf: [
-      { 
+      {
         $ref: '#/components/schemas/SOLAnswer',
         title: 'Select One in Lot Answer',
         description: 'Commonly reffered as MCQ (Multiple Choice Question)',
       },
-      { 
+      {
         $ref: '#/components/schemas/SMLAnswer',
         title: 'Select Many in Lot Answer',
         description: 'Commonly reffered as MSQ (Multiple Select Question)',
       },
-      { 
+      {
         $ref: '#/components/schemas/OTLAnswer',
         title: 'Order the Lots Answer',
       },
-      { 
+      {
         $ref: '#/components/schemas/NATAnswer',
         title: 'Numeric Answer Type',
       },
-      { 
+      {
         $ref: '#/components/schemas/DESAnswer',
-        title: 'Descriptive Answer', 
+        title: 'Descriptive Answer',
       },
     ],
   })
@@ -334,7 +339,7 @@ class QuestionAnswer implements IQuestionAnswer {
   @Type((type) => {
 
     if (!type) {
-      return Object;
+      return SOLAnswer;
     }
 
     switch (type.object.questionType as QuestionType) {
@@ -378,7 +383,7 @@ class QuestionDetails implements IQuestionDetails {
 
 class QuestionAnswersBody {
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionAnswer)
   @JSONSchema({
     description: 'Array of answers for the quiz',
@@ -388,16 +393,93 @@ class QuestionAnswersBody {
   answers: QuestionAnswer[];
 }
 
+@JSONSchema({
+  description: 'Map of string keys to string or number values',
+  additionalProperties: {
+    oneOf: [{ type: 'string' }, { type: 'number' }],
+  },
+  example: {
+    difficulty: 'easy',
+    maxScore: 10,
+  },
+})
+export class ParameterMapValidator {
+  @IsOptional()
+  __dummy?: any;
+
+  [key: string]: string | number;
+}
+
+@JSONSchema({
+  description: 'A lot item used for rendering (excludes explanation)',
+  type: 'object',
+  example: {
+    _id: '60d21b4667d0d8992e610c01',
+    text: 'Option A'
+  }
+})
+class LotItemRenderViewValidator {
+  @IsOptional()
+  @IsMongoId()
+  @JSONSchema({
+    description: 'Mongo ID of the item',
+    type: 'string',
+    example: '60d21b4667d0d8992e610c01'
+  })
+  _id?: string;
+
+  @IsString()
+  @JSONSchema({
+    description: 'Text for the item',
+    type: 'string',
+    example: 'Option A'
+  })
+  text: string;
+}
+
 class QuestionRenderView extends Question implements IQuestionRenderView {
   @IsOptional()
   @ValidateNested()
+  @Type(() => ParameterMapValidator)
   @JSONSchema({
-    description: 'Parameter map for the question',
-    type: 'object',
+    description: 'Dynamic parameters for the question',
     additionalProperties: { oneOf: [{ type: 'string' }, { type: 'number' }] },
-    example: { difficulty: 'easy', maxScore: 10 }
+    example: { difficulty: 'easy', maxScore: 10 },
+    $ref: '#/components/schemas/ParameterMapValidator'
   })
   parameterMap?: ParameterMap;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => LotItemRenderViewValidator)
+  @JSONSchema({
+    description: 'Options to display for the question',
+    type: 'array',
+    items: { $ref: '#/components/schemas/LotItemRenderViewValidator' },
+    example: [
+      {
+        _id: '60d21b4667d0d8992e610c01',
+        text: 'Option A'
+      },
+      {
+        _id: '60d21b4667d0d8992e610c02',
+        text: 'Option B'
+      }
+    ]
+  })
+  lotItems?: ILotItemRenderView[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @JSONSchema({
+    description: 'Allowed decimal places for numeric input',
+    type: 'integer',
+    example: 2,
+    minimum: 0,
+    maximum: 10
+  })
+  decimalPrecision?: number;
 }
 
 // Response Schemas
@@ -405,29 +487,29 @@ class CreateAttemptResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the created attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
   attemptId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
-  @ValidateNested({each: true})
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
   @Type(() => QuestionRenderView)
   @JSONSchema({
-    description: 'Question render views for the attempt',
+    description: 'Rendered questions for this attempt',
     type: 'array',
     items: { $ref: '#/components/schemas/QuestionRenderView' },
   })
-  questionRenderViews: IQuestionRenderView[];
+  questionRenderViews: QuestionRenderView[];
 }
 
 class SubmitAttemptResponse implements Partial<IGradingResult> {
   @IsNumber()
   @IsOptional()
   @JSONSchema({
-    description: 'Total score for the attempt',
+    description: 'Score obtained',
     type: 'number',
     example: 8,
   })
@@ -436,7 +518,7 @@ class SubmitAttemptResponse implements Partial<IGradingResult> {
   @IsNumber()
   @IsOptional()
   @JSONSchema({
-    description: 'Maximum possible score for the attempt',
+    description: 'Maximum score',
     type: 'number',
     example: 10,
   })
@@ -444,10 +526,10 @@ class SubmitAttemptResponse implements Partial<IGradingResult> {
 
   @IsMongoId()
   @IsNotEmpty()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionAnswerFeedback)
   @JSONSchema({
-    description: 'Overall feedback for the attempt',
+    description: 'Question-wise feedback',
     type: 'array',
     items: { $ref: '#/components/schemas/QuestionAnswerFeedback' },
   })
@@ -456,7 +538,7 @@ class SubmitAttemptResponse implements Partial<IGradingResult> {
   @IsString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Grading status',
+    description: 'Result status',
     type: 'string',
     enum: ['PENDING', 'PASSED', 'FAILED'],
     example: 'PASSED',
@@ -466,7 +548,7 @@ class SubmitAttemptResponse implements Partial<IGradingResult> {
   @IsDateString()
   @IsOptional()
   @JSONSchema({
-    description: 'Date when graded',
+    description: 'Grading timestamp',
     example: '2024-06-18T12:30:00.000Z',
   })
   gradedAt?: Date;
@@ -474,7 +556,7 @@ class SubmitAttemptResponse implements Partial<IGradingResult> {
   @IsString()
   @IsOptional()
   @JSONSchema({
-    description: 'User who graded the attempt',
+    description: 'Evaluator name',
     type: 'string',
     example: 'admin',
   })
@@ -737,7 +819,7 @@ class RegradeSubmissionBody implements Partial<IGradingResult> {
   @JSONSchema({
     description: 'Overall feedback after regrading',
     type: 'array',
-    items: {$ref: '#/components/schemas/QuestionAnswerFeedback'},
+    items: { $ref: '#/components/schemas/QuestionAnswerFeedback' },
   })
   overallFeedback?: IQuestionAnswerFeedback[];
 
@@ -783,11 +865,11 @@ class AttemptDetails implements IAttemptDetails {
   submissionResultId?: string | ObjectId;
 }
 
-class UserQuizMetricsResponse {
+class UserQuizMetricsResponse implements IUserQuizMetrics {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the metrics record',
+    description: 'Metrics record ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
@@ -796,7 +878,7 @@ class UserQuizMetricsResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the quiz',
+    description: 'Quiz ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -805,7 +887,7 @@ class UserQuizMetricsResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the user',
+    description: 'User ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
@@ -824,7 +906,7 @@ class UserQuizMetricsResponse {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the latest attempt',
+    description: 'Latest attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
@@ -833,7 +915,7 @@ class UserQuizMetricsResponse {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the latest submission result',
+    description: 'Latest submission result ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c77',
   })
@@ -842,28 +924,28 @@ class UserQuizMetricsResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Number of remaining attempts',
+    description: 'Remaining attempts',
     type: 'number',
     example: 2,
   })
   remainingAttempts: number;
 
   @IsNotEmpty()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => AttemptDetails)
   @JSONSchema({
-    description: 'List of attempts',
+    description: 'Quiz attempt history',
     type: 'array',
     items: { $ref: '#/components/schemas/AttemptDetails' },
   })
   attempts: IAttemptDetails[];
 }
 
-class QuizAttemptResponse {
+class QuizAttemptResponse implements IAttempt {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
@@ -872,7 +954,7 @@ class QuizAttemptResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the quiz',
+    description: 'Quiz ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -881,42 +963,46 @@ class QuizAttemptResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the user',
+    description: 'User ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
   userId: string | ObjectId;
 
   @IsNotEmpty()
+  @Type(() => QuestionDetails)
+  @ValidateNested({ each: true })
   @JSONSchema({
-    description: 'List of question details in the quiz',
+    description: 'Questions in the quiz',
     type: 'array',
     items: { type: 'object' },
   })
   questionDetails: IQuestionDetails[];
 
   @IsOptional()
+  @Type(() => QuestionAnswer)
+  @ValidateNested({ each: true })
   @JSONSchema({
-    description: 'Answers for the attempt',
+    description: 'Submitted answers',
     type: 'array',
     items: { type: 'object' },
   })
   answers?: IQuestionAnswer[];
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Creation date',
+    description: 'Created on',
     type: 'string',
     format: 'date-time',
     example: '2024-06-18T12:00:00.000Z',
   })
   createdAt: Date;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Last update date',
+    description: 'Last updated on',
     type: 'string',
     format: 'date-time',
     example: '2024-06-18T12:30:00.000Z',
@@ -928,7 +1014,7 @@ class GradingResult implements IGradingResult {
   @IsNumber()
   @IsOptional()
   @JSONSchema({
-    description: 'Total score for the grading result',
+    description: 'Score awarded',
     type: 'number',
     example: 8,
   })
@@ -937,7 +1023,7 @@ class GradingResult implements IGradingResult {
   @IsNumber()
   @IsOptional()
   @JSONSchema({
-    description: 'Maximum possible score for the grading result',
+    description: 'Maximum possible score',
     type: 'number',
     example: 10,
   })
@@ -945,24 +1031,50 @@ class GradingResult implements IGradingResult {
 
   @IsArray()
   @IsOptional()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionAnswerFeedback)
   @JSONSchema({
-    description: 'Overall feedback for the grading result',
+    description: 'Feedback per question',
     type: 'array',
     items: { $ref: '#/components/schemas/QuestionAnswerFeedback' },
   })
   overallFeedback?: IQuestionAnswerFeedback[];
+
+  @IsEnum(['PENDING', 'PASSED', 'FAILED'])
+  @IsNotEmpty()
+  @JSONSchema({
+    description: 'Grading status',
+    type: 'string',
+    enum: ['PENDING', 'PASSED', 'FAILED'],
+    example: 'PASSED',
+  })
   gradingStatus: 'PENDING' | 'PASSED' | 'FAILED' | any;
+
+  @IsDateString()
+  @IsOptional()
+  @JSONSchema({
+    description: 'Grading timestamp',
+    type: 'string',
+    format: 'date-time',
+    example: '2024-06-18T12:30:00.000Z',
+  })
   gradedAt?: Date;
+
+  @IsString()
+  @IsOptional()
+  @JSONSchema({
+    description: 'Graded by',
+    type: 'string',
+    example: 'Teacher',
+  })
   gradedBy?: string;
 }
 
-class QuizSubmissionResponse {
+class QuizSubmissionResponse implements ISubmission {
   @IsMongoId()
   @IsOptional()
   @JSONSchema({
-    description: 'ID of the submission',
+    description: 'Submission ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c77',
   })
@@ -971,7 +1083,7 @@ class QuizSubmissionResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the quiz',
+    description: 'Quiz ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -980,7 +1092,7 @@ class QuizSubmissionResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the user',
+    description: 'User ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
@@ -989,16 +1101,18 @@ class QuizSubmissionResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
   attemptId: string | ObjectId;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Submission date',
+    description: 'Submitted on',
+    type: 'string',
+    format: 'date-time',
     example: '2024-06-18T12:45:00.000Z',
   })
   submittedAt: Date;
@@ -1007,15 +1121,14 @@ class QuizSubmissionResponse {
   @ValidateNested()
   @Type(() => GradingResult)
   @JSONSchema({
-    description: 'Grading result for the submission',
+    description: 'Grading result',
     type: 'object',
-    items: {$ref: '#/components/schemas/GradingResult'},
   })
   gradingResult?: IGradingResult;
 }
 
 class QuizDetails implements IQuizDetails {
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => QuestionBankRef)
   @IsArray()
   @IsNotEmpty()
@@ -1054,7 +1167,7 @@ class QuizDetails implements IQuizDetails {
   })
   quizType: 'DEADLINE' | 'NO_DEADLINE'; // Type of quiz
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   @JSONSchema({
     description: 'Release time for the quiz',
@@ -1071,7 +1184,7 @@ class QuizDetails implements IQuizDetails {
   })
   questionVisibility: number; // Number of questions visible to the user at a time
 
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   @JSONSchema({
     description: 'Deadline for the quiz, only applicable for DEADLINE type',
@@ -1177,7 +1290,6 @@ class QuizDetailsResponse {
   @Type(() => QuizDetails)
   @JSONSchema({
     description: 'Quiz details',
-    items: {$ref: '#/components/schemas/QuizDetails'},
   })
   details?: IQuizDetails;
 }
@@ -1186,7 +1298,7 @@ class QuizAnalyticsResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Total number of attempts',
+    description: 'Total attempts',
     type: 'number',
     example: 100,
   })
@@ -1195,7 +1307,7 @@ class QuizAnalyticsResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Number of submissions',
+    description: 'Total submissions',
     type: 'number',
     example: 80,
   })
@@ -1204,7 +1316,7 @@ class QuizAnalyticsResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Pass rate (%)',
+    description: 'Pass percentage',
     type: 'number',
     example: 75,
   })
@@ -1224,7 +1336,7 @@ class QuizPerformanceResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the question',
+    description: 'Question ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c02',
   })
@@ -1233,7 +1345,7 @@ class QuizPerformanceResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Correct answer rate (%)',
+    description: 'Correct response rate (%)',
     type: 'number',
     example: 80,
   })
@@ -1242,7 +1354,7 @@ class QuizPerformanceResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Average score for the question',
+    description: 'Average question score',
     type: 'number',
     example: 4.2,
   })
@@ -1253,7 +1365,7 @@ class QuizResultsResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the student',
+    description: 'Student ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
@@ -1262,7 +1374,7 @@ class QuizResultsResponse {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
@@ -1271,7 +1383,7 @@ class QuizResultsResponse {
   @IsNumber()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Score for the attempt',
+    description: 'Attempt score',
     type: 'number',
     example: 9,
   })
@@ -1280,7 +1392,7 @@ class QuizResultsResponse {
   @IsEnum(['PENDING', 'PASSED', 'FAILED'])
   @IsNotEmpty()
   @JSONSchema({
-    description: 'Status of the attempt',
+    description: 'Grading status',
     type: 'string',
     enum: ['PENDING', 'PASSED', 'FAILED'],
     example: 'PASSED',
@@ -1296,7 +1408,7 @@ class SubmissionResponse implements ISubmission {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the submission',
+    description: 'Submission ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c77',
   })
@@ -1305,7 +1417,7 @@ class SubmissionResponse implements ISubmission {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the quiz',
+    description: 'Quiz ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c85',
   })
@@ -1314,7 +1426,7 @@ class SubmissionResponse implements ISubmission {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the user',
+    description: 'User ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c01',
   })
@@ -1323,17 +1435,16 @@ class SubmissionResponse implements ISubmission {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the attempt',
+    description: 'Attempt ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c99',
   })
   attemptId: string;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
-  @Type(() => Date)
   @JSONSchema({
-    description: 'Submission date',
+    description: 'Submitted on',
     type: 'string',
     format: 'date-time',
     example: '2024-06-18T12:45:00.000Z',
@@ -1342,18 +1453,21 @@ class SubmissionResponse implements ISubmission {
 
   @IsOptional()
   @JSONSchema({
-    description: 'Grading result for the submission',
+    description: 'Grading result',
     type: 'object',
   })
-  gradingResult?: IGradingResult;
+  @Type(() => GradingResult)
+  @ValidateNested()
+  gradingResult?: IGradingResult;s
 }
 
 class GetAllSubmissionsResponse {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SubmissionResponse)
+  @IsNotEmpty()
   @JSONSchema({
-    description: 'List of all submissions',
+    description: 'Submissions list',
     type: 'array',
     items: { type: 'object' },
   })
@@ -1470,6 +1584,7 @@ export {
   UserQuizMetricsResponse,
   QuizAttemptResponse,
   QuizSubmissionResponse,
+  SubmissionResponse,
   QuizDetailsResponse,
   QuizAnalyticsResponse,
   QuizPerformanceResponse,
@@ -1503,6 +1618,7 @@ export const QUIZ_VALIDATORS = [
   UserQuizMetricsResponse,
   QuizAttemptResponse,
   QuizSubmissionResponse,
+  SubmissionResponse,
   QuizDetailsResponse,
   QuizAnalyticsResponse,
   QuizPerformanceResponse,

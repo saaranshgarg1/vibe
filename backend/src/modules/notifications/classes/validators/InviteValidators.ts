@@ -70,59 +70,69 @@ export type InviteStatus = 'ACCEPTED' | 'PENDING' | 'CANCELLED' | 'EMAIL_FAILED'
 
 class InviteResult {
   @JSONSchema({
-    description: 'Unique identifier for the invite',
+    description: 'Invite ID',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
     example: '60c72b2f9b1e8d3f4c8b4567',
   })
   @IsString()
   @Transform(StringToObjectId.transformer, { toClassOnly: true })
-  @Transform(ObjectIdToString.transformer, { toPlainOnly: true }) 
+  @Transform(ObjectIdToString.transformer, { toPlainOnly: true })
+  @IsNotEmpty()
   inviteId: ObjectId | string;
 
   @JSONSchema({
-    description: 'Email address of the invited user',
+    description: 'Email of the invited user',
     type: 'string',
     format: 'email',
     example: 'user@example.com',
   })
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @JSONSchema({
-    description: `Status of the invite</br>
-- ACCEPTED: User has accepted the invite
-- PENDING: Invite is still pending
-- CANCELLED: Invite has been cancelled
-- EMAIL_FAILED: Email sending failed
-- ALREADY_ENROLLED: User is already enrolled in the course
-    `,
+    description: 'Status of the invitation',
     type: 'string',
     enum: ['ACCEPTED', 'PENDING', 'CANCELLED', 'EMAIL_FAILED', 'ALREADY_ENROLLED'],
     example: 'PENDING',
   })
   @IsString()
+  @IsNotEmpty()
   inviteStatus: InviteStatus;
 
   @JSONSchema({
-    description: 'Role that the user will have in the course',
+    description: 'Assigned role for the invited user',
     type: 'string',
     enum: ['INSTRUCTOR', 'STUDENT', 'MANAGER', 'TA', 'STAFF'],
     example: 'STUDENT',
   })
   @IsString()
+  @IsNotEmpty()
   role: EnrollmentRole = 'STUDENT';
 
   @IsString()
   @IsOptional()
   @Transform(StringToObjectId.transformer, { toClassOnly: true })
   @Transform(ObjectIdToString.transformer, { toPlainOnly: true })
+  @JSONSchema({
+    description: 'Course ID related to the invite',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+    example: '60c72b2f9b1e8d3f4c8b4567',
+  })
   courseId?: string | ObjectId;
 
   @IsString()
   @IsOptional()
   @Transform(StringToObjectId.transformer, { toClassOnly: true })
   @Transform(ObjectIdToString.transformer, { toPlainOnly: true })
+  @JSONSchema({
+    description: 'Course version ID related to the invite',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+    example: '60c72b2f9b1e8d3f4c8b4567',
+  })
   courseVersionId?: string | ObjectId;
 
   @JSONSchema({
@@ -153,6 +163,17 @@ class InviteResponse {
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => InviteResult)
+  @JSONSchema({
+    description: 'Array of invite results',
+    type: 'array',
+    example: [
+      {
+        email: 'user@example.com',
+        status: 'SENT',
+        userId: '60d21b4667d0d8992e610c01'
+      }
+    ]
+  })
   invites: InviteResult[];
 
   constructor(invites: InviteResult[]) {

@@ -22,7 +22,6 @@ import {IInvite, InviteActionType, InviteStatusType} from '#shared/interfaces/mo
 
 class Invite {
   @JSONSchema({
-    title: 'Course ID',
     description: 'Unique identifier for the course',
     type: 'string',
   })
@@ -35,7 +34,6 @@ class Invite {
 
 
   @JSONSchema({
-    title: 'Recipient Email',
     description: 'The email address of the person being invited.',
     example: 'invitee@example.com',
     type: 'string',
@@ -47,7 +45,6 @@ class Invite {
   email: string;
 
   @JSONSchema({
-    title: 'Course ID',
     description: 'The unique identifier of the course the invite is for.',
     type: 'string',
   })
@@ -57,7 +54,6 @@ class Invite {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description:
       'The unique identifier of the specific course version for the invite.',
     type: 'string', // The type expected in the incoming JSON payload
@@ -81,7 +77,6 @@ class Invite {
 
   @Type(() => Date)
   @JSONSchema({
-    title: 'Course Created At',
     description: 'Timestamp when the course was created',
     example: '2023-10-01T12:00:00Z',
     type: 'string',
@@ -128,7 +123,13 @@ class Invite {
 @Expose()
 export class MessageResponse {
   @Expose()
-  message: string
+  @IsString()
+  @IsNotEmpty()
+  @JSONSchema({
+    description: 'Invite Message',
+    example: 'Invite processed successfully',
+  })
+  message: string;
 }
 
 

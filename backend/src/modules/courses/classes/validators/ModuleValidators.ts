@@ -6,13 +6,15 @@ import {
   IsOptional,
   IsMongoId,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 import {OnlyOneId} from './customValidators.js';
+import { CourseVersion } from '../transformers/CourseVersion.js';
+import { Type } from 'class-transformer';
 
 class CreateModuleBody implements Partial<IModule> {
   @JSONSchema({
-    title: 'Module Name',
     description: 'Name/title of the module',
     example: 'Introduction to Data Structures',
     type: 'string',
@@ -24,7 +26,6 @@ class CreateModuleBody implements Partial<IModule> {
   name: string;
 
   @JSONSchema({
-    title: 'Module Description',
     description: 'Detailed description of the module content',
     example:
       'This module covers fundamental data structures including arrays, linked lists, stacks, and queues.',
@@ -37,11 +38,10 @@ class CreateModuleBody implements Partial<IModule> {
   description: string;
 
   @JSONSchema({
-    title: 'After Module ID',
     description: 'Position the new module after this module ID',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -53,11 +53,10 @@ class CreateModuleBody implements Partial<IModule> {
   afterModuleId?: string;
 
   @JSONSchema({
-    title: 'Before Module ID',
     description: 'Position the new module before this module ID',
     example: '60d5ec49b3f1c8e4a8f8b8c4',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -67,7 +66,6 @@ class CreateModuleBody implements Partial<IModule> {
 
 class UpdateModuleBody implements Partial<IModule> {
   @JSONSchema({
-    title: 'Module Name',
     description: 'Updated name of the module',
     example: 'Advanced Data Structures',
     type: 'string',
@@ -79,7 +77,6 @@ class UpdateModuleBody implements Partial<IModule> {
   name: string;
 
   @JSONSchema({
-    title: 'Module Description',
     description: 'Updated description of the module content',
     example:
       'This module covers advanced data structures including trees, graphs, and hash tables.',
@@ -94,11 +91,10 @@ class UpdateModuleBody implements Partial<IModule> {
 
 class MoveModuleBody {
   @JSONSchema({
-    title: 'After Module ID',
     description: 'Move the module after this module ID',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -110,11 +106,10 @@ class MoveModuleBody {
   afterModuleId?: string;
 
   @JSONSchema({
-    title: 'Before Module ID',
     description: 'Move the module before this module ID',
     example: '60d5ec49b3f1c8e4a8f8b8c4',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsMongoId()
@@ -124,10 +119,9 @@ class MoveModuleBody {
 
 class CreateModuleParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version to which the module will be added',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -136,20 +130,18 @@ class CreateModuleParams {
 
 class VersionModuleParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version containing the module',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
   versionId: string;
 
   @JSONSchema({
-    title: 'Module ID',
     description: 'ID of the module to be updated',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsMongoId()
   @IsString()
@@ -162,8 +154,10 @@ class ModuleDataResponse {
     type: 'object',
     readOnly: true,
   })
+  @Type(() => CourseVersion)
+  @ValidateNested()
   @IsNotEmpty()
-  version: ICourseVersion;
+  version: CourseVersion;
 }
 
 class ModuleNotFoundErrorResponse {
@@ -182,6 +176,8 @@ class ModuleDeletedResponse {
     type: 'string',
     readOnly: true,
   })
+  @ValidateNested()
+  @Type(() => String)
   @IsNotEmpty()
   message: string;
 }

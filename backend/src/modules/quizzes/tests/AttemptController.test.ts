@@ -126,12 +126,34 @@ describe('AttemptController', async () => {
       const sectionId =
         sectionRes.body.version.modules[0].sections[0].sectionId;
 
+
+      // const questionRes = await request(app).post('/quizzes/questions').send({
+      //   question: NATquestionData,
+      //   solution: NATsolution,
+      // });
+      // expect(questionRes.status).toBe(201);
+      // const questionId = questionRes.body.questionId;
+
+      // // Create question bank with the question
+      // const bankRes = await request(app)
+      //   .post('/quizzes/question-bank')
+      //   .send({
+      //     courseId,
+      //     courseVersionId: versionId,
+      //     questions: [questionId],
+      //     title: 'Bank for Attempt Save Real',
+      //     description: 'Bank for attempt save test',
+      //   });
+      // expect(bankRes.status).toBe(200);
+      // const questionBankId = bankRes.body.questionBankId;
+
       // Create quiz item
       const itemPayload = {
         name: 'Quiz Item for Attempt',
         description: 'Quiz item description',
         type: ItemType.QUIZ,
         quizDetails: {
+          // questionBankIds: [questionBankId],
           questionVisibility: 3,
           allowPartialGrading: true,
           deadline: faker.date.future(),

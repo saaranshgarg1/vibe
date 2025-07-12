@@ -24,6 +24,7 @@ import {
   MoveItemBody,
   GetItemParams,
   VersionModuleSectionItemParams,
+  GetItemResponse,
 } from '#courses/classes/validators/ItemValidators.js';
 import {ItemService} from '#courses/services/ItemService.js';
 import {injectable, inject} from 'inversify';
@@ -32,6 +33,9 @@ import { ItemActions, getItemAbility } from '../abilities/itemAbilities.js';
 import { Ability } from '#root/shared/functions/AbilityDecorator.js';
 import { subject } from '@casl/ability';
 
+@OpenAPI({
+  tags: ['Course Items'],
+})
 @injectable()
 @JsonController('/courses')
 export class ItemController {
@@ -63,7 +67,7 @@ export class ItemController {
     @Params() params: VersionModuleSectionParams,
     @Body() body: CreateItemBody,
     @Ability(getItemAbility) {ability}
-  ) {
+  ): Promise<ItemDataResponse> {
     const {versionId, moduleId, sectionId} = params;
     
     // Create an item resource object for permission checking
@@ -253,7 +257,7 @@ Access control logic:
   @Authorized()
   @Get('/:courseId/versions/:versionId/item/:itemId')
   @HttpCode(201)
-  @ResponseSchema(ItemDataResponse, {
+  @ResponseSchema(GetItemResponse, {
     description: 'Item retrieved successfully',
   })
   @ResponseSchema(BadRequestErrorResponse, {

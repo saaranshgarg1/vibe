@@ -1,4 +1,4 @@
-import {Type} from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsString,
@@ -19,9 +19,9 @@ import {
   IsEnum,
   IsArray,
 } from 'class-validator';
-import {JSONSchema} from 'class-validator-jsonschema';
-import {CourseVersion} from '../transformers/CourseVersion.js';
-import {ItemRef, ItemsGroup} from '../transformers/Item.js';
+import { JSONSchema } from 'class-validator-jsonschema';
+import { CourseVersion } from '../transformers/CourseVersion.js';
+import { ItemRef, ItemsGroup } from '../transformers/Item.js';
 import {
   IVideoDetails,
   IQuizDetails,
@@ -30,11 +30,10 @@ import {
   ItemType,
   ID,
 } from '#root/shared/interfaces/models.js';
-import {OnlyOneId} from './customValidators.js';
+import { OnlyOneId } from './customValidators.js';
 
 class VideoDetailsPayloadValidator implements IVideoDetails {
   @JSONSchema({
-    title: 'Video URL',
     description: 'Public video URL (e.g., YouTube or Vimeo link)',
     example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     type: 'string',
@@ -46,7 +45,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   URL: string;
 
   @JSONSchema({
-    title: 'Start Time',
     description: 'Start time of the video clip in HH:MM:SS format',
     example: '00:01:30',
     type: 'string',
@@ -58,7 +56,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   startTime: string;
 
   @JSONSchema({
-    title: 'End Time',
     description: 'End time of the video clip in HH:MM:SS format',
     example: '00:10:15',
     type: 'string',
@@ -70,7 +67,6 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
   endTime: string;
 
   @JSONSchema({
-    title: 'Video Points',
     description: 'Points assigned to the video interaction',
     example: 10,
     type: 'number',
@@ -81,8 +77,7 @@ class VideoDetailsPayloadValidator implements IVideoDetails {
 }
 
 class QuizDetailsPayloadValidator
-  implements Omit<IQuizDetails, 'questionBankRefs'>
-{
+  implements Omit<IQuizDetails, 'questionBankRefs'> {
   @JSONSchema({
     description: 'Minimum percentage required to pass, between 0 and 1',
     example: 0.7,
@@ -90,7 +85,6 @@ class QuizDetailsPayloadValidator
     minimum: 0,
     maximum: 1,
   })
-  @IsPositive()
   @IsNumber()
   @Min(0)
   @Max(1)
@@ -186,8 +180,8 @@ class QuizDetailsPayloadValidator
     type: 'integer',
     minimum: 1,
   })
+  @Min(1)
   @IsNotEmpty()
-  @IsPositive()
   questionVisibility: number;
 
   @JSONSchema({
@@ -195,6 +189,7 @@ class QuizDetailsPayloadValidator
     example: '2023-10-15T14:00:00Z',
     type: 'string',
     format: 'date-time',
+    pattern: '^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d(?:\\.\\d+)?Z$'
   })
   @IsNotEmpty()
   @IsDateString()
@@ -205,6 +200,7 @@ class QuizDetailsPayloadValidator
     example: '2023-10-22T23:59:59Z',
     type: 'string',
     format: 'date-time',
+    pattern: '^\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d(?:\\.\\d+)?Z$'
   })
   @IsOptional()
   @IsDateString()
@@ -228,7 +224,7 @@ class BlogDetailsPayloadValidator implements IBlogDetails {
 
 
   @IsNotEmpty()
-  @IsPositive()
+  @Min(0)
   estimatedReadTimeInMinutes: number;
 }
 
@@ -396,7 +392,6 @@ class UpdateItemBody implements Partial<IBaseItem> {
 
 class MoveItemBody {
   @JSONSchema({
-    title: 'After Item ID',
     description: 'Move the item after this item ID',
     example: '60d5ec49b3f1c8e4a8f8b8c3',
     type: 'string',
@@ -411,7 +406,6 @@ class MoveItemBody {
   afterItemId?: string;
 
   @JSONSchema({
-    title: 'Before Item ID',
     description: 'Move the item before this item ID',
     example: '60d5ec49b3f1c8e4a8f8b8c4',
     type: 'string',
@@ -424,7 +418,6 @@ class MoveItemBody {
 
 class VersionModuleSectionItemParams {
   @JSONSchema({
-    title: 'Version ID',
     description: 'ID of the course version',
     type: 'string',
   })
@@ -433,7 +426,6 @@ class VersionModuleSectionItemParams {
   versionId: string;
 
   @JSONSchema({
-    title: 'Module ID',
     description: 'ID of the module',
     type: 'string',
   })
@@ -442,7 +434,6 @@ class VersionModuleSectionItemParams {
   moduleId: string;
 
   @JSONSchema({
-    title: 'Section ID',
     description: 'ID of the section',
     type: 'string',
   })
@@ -451,7 +442,6 @@ class VersionModuleSectionItemParams {
   sectionId: string;
 
   @JSONSchema({
-    title: 'Item ID',
     description: 'ID of the item',
     type: 'string',
   })
@@ -462,9 +452,8 @@ class VersionModuleSectionItemParams {
 
 class DeleteItemParams {
   @JSONSchema({
-    title: 'Items Group ID',
     description: 'ID of the items group containing the item',
-    example: '60d5ec49b3f1c8e4a8f8b8g9',
+    example: '60d5ec49b3f1c8e4a8f8b8f9',
     type: 'string',
   })
   @IsMongoId()
@@ -472,7 +461,6 @@ class DeleteItemParams {
   itemsGroupId: string;
 
   @JSONSchema({
-    title: 'Item ID',
     description: 'ID of the item to delete',
     example: '60d5ec49b3f1c8e4a8f8b8f8',
     type: 'string',
@@ -484,9 +472,8 @@ class DeleteItemParams {
 
 class GetItemParams {
   @JSONSchema({
-    title: 'Course ID',
     description: 'ID of the course in which user is enrolled',
-    example: '60d5ec49b3f1c8e4a8f8b8g9',
+    example: '60d5ec49b3f1c8e4a8f8b8f9',
     type: 'string',
   })
   @IsMongoId()
@@ -494,7 +481,6 @@ class GetItemParams {
   courseId: string;
 
   @JSONSchema({
-    title: 'Course Version ID',
     description: 'ID of the course version containing the item',
     example: '60d5ec49b3f1c8e4a8f8b8f8',
     type: 'string',
@@ -504,7 +490,6 @@ class GetItemParams {
   versionId: string;
 
   @JSONSchema({
-    title: 'Item ID',
     description: 'ID of the item',
     example: '60d5ec49b3f1c8e4a8f8b8f8',
     type: 'string',
@@ -575,7 +560,7 @@ class ItemsGroupResponse implements ItemsGroup {
   })
   @IsNotEmpty()
   @Type(() => ItemRefResponse)
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @IsArray()
   items: ItemRef[];
 
@@ -589,12 +574,31 @@ class ItemsGroupResponse implements ItemsGroup {
   sectionId: ID;
 }
 
+class GetItemResponse {
+  @JSONSchema({
+    description: 'The version Id',
+    type: 'string',
+    readOnly: true,
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  versionId: ID;
+
+  @JSONSchema({
+    description: 'The item Id',
+    type: 'string',
+    readOnly: true,
+  })
+  @IsMongoId()
+  @IsNotEmpty()
+  itemId: string
+}
+
 class ItemDataResponse {
   @JSONSchema({
     description: 'The item data',
     type: 'object',
     readOnly: true,
-    items: { $ref: '#/components/schemas/ItemGroupResponse' }
   })
   @IsNotEmpty()
   @ValidateNested()
@@ -606,18 +610,30 @@ class ItemDataResponse {
     type: 'object',
     readOnly: true,
   })
+  @ValidateNested()
+  @Type(() => CourseVersion)
   @IsOptional()
   version?: CourseVersion;
+
+  @JSONSchema({
+    description: 'The Created Item',
+    type: 'object',
+    readOnly: true,
+  })
+  @ValidateNested({ each: true })
+  @Type(() => ItemRefResponse)
+  @IsOptional()
+  createdItem?: ItemRefResponse;
 }
 
 class DeletedItemResponse {
   @JSONSchema({
-    description: 'The deleted item data',
-    type: 'object',
+    description: 'The deleted item id',
+    type: 'string',
     readOnly: true,
   })
   @IsNotEmpty()
-  deletedItem: Record<string, any>;
+  deletedItemId: string;
 
   @JSONSchema({
     description: 'The updated items group after deletion',
@@ -625,7 +641,9 @@ class DeletedItemResponse {
     readOnly: true,
   })
   @IsNotEmpty()
-  updatedItemsGroup: Record<string, any>;
+  @ValidateNested()
+  @Type(() => ItemsGroupResponse)
+  updatedItemsGroup: ItemsGroup;
 }
 
 export {
@@ -641,6 +659,7 @@ export {
   ItemDataResponse,
   DeletedItemResponse,
   GetItemParams,
+  GetItemResponse
 };
 
 export const ITEM_VALIDATORS = [
@@ -656,4 +675,5 @@ export const ITEM_VALIDATORS = [
   ItemDataResponse,
   DeletedItemResponse,
   GetItemParams,
+  GetItemResponse
 ]

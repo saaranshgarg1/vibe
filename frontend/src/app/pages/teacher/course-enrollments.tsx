@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearch } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 import {
   Search,
   Users,
@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   X,
   Loader2,
+  Eye,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,23 +34,23 @@ import {
   useItemsBySectionId,
   useCourseVersionEnrollments,
   useResetProgress,
+  useUnenrollUser,
 } from "@/hooks/hooks"
 
-import type { EnrolledUser, EnrollmentsSearchParams, ResetProgressData } from "@/types/course.types"
+import { useCourseStore } from "@/store/course-store"
+import type { EnrolledUser, EnrollmentsSearchParams } from "@/types/course.types"
 
 export default function CourseEnrollments() {
-  // Get search params using TanStack Router
-  const search = useSearch({ from: "/teacher/courses/enrollments" }) as EnrollmentsSearchParams
-  const courseId = search?.courseId
-  const versionId = search?.versionId
+  const navigate = useNavigate()
+  
+  // Get course info from store
+  const { currentCourse } = useCourseStore()
+  const courseId = currentCourse?.courseId
+  const versionId = currentCourse?.versionId
 
   // Fetch course and version data
   const { data: course, isLoading: courseLoading, error: courseError } = useCourseById(courseId || "")
-  const {
-    data: version,
-    isLoading: versionLoading,
-    error: versionError,
-  } = useCourseVersionById(versionId || "")
+  const { data: version, isLoading: versionLoading, error: versionError } = useCourseVersionById(versionId || "")
 
   const [selectedUser, setSelectedUser] = useState<EnrolledUser | null>(null)
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false)
@@ -71,19 +72,28 @@ export default function CourseEnrollments() {
 
   // API Hooks
   const resetProgressMutation = useResetProgress()
+  const unenrollMutation = useUnenrollUser()
 
   // Show all enrollments regardless of role or status
   const studentEnrollments = enrollmentsData?.enrollments || []
+  console.log("unfiltered Users:", studentEnrollments)
 
-  const filteredUsers = studentEnrollments.filter((enrollment: any) =>
-    enrollment.userId.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredUsers = studentEnrollments.filter(
+    (enrollment: any) =>
+      enrollment &&
+      ( enrollment?.userID?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        enrollment?.user?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       enrollment?.user?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       enrollment?.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+       (enrollment?.user?.firstName + " " + enrollment?.user?.lastName).toLowerCase().includes(searchQuery.toLowerCase()))
   )
+  console.log("Filtered Users:", filteredUsers)
 
   useEffect(() => {
     if (isResetDialogOpen) {
       setResetScope("course")
       setSelectedModule("")
-      setSelectedSection("")
+      setSelectedSection("")  
       setSelectedItem("")
     }
   }, [isResetDialogOpen])
@@ -93,19 +103,42 @@ export default function CourseEnrollments() {
     setIsResetDialogOpen(true)
   }
 
+  const handleViewProgress = (user: EnrolledUser) => {
+    // Store the selected user's ID in localStorage for the view-progress page
+    localStorage.setItem('selectedUserId', user.email) // email field contains the actual userId
+    localStorage.setItem('selectedUserName', user.name)
+    
+    // Navigate to view-progress page
+    navigate({ to: "/teacher/courses/progress" })
+  }
+
   const handleRemoveStudent = (user: EnrolledUser) => {
     setUserToRemove(user)
     setIsRemoveDialogOpen(true)
   }
 
-  const confirmRemoveStudent = () => {
-    if (userToRemove) {
-      // TODO: Implement API call to remove student from course version
-      console.log("Removing student:", userToRemove)
-      setIsRemoveDialogOpen(false)
-      setUserToRemove(null)
-      // Refetch enrollments after removal
-      refetchEnrollments()
+  const confirmRemoveStudent = async () => {
+    if (userToRemove && courseId && versionId) {
+      try {
+        await unenrollMutation.mutateAsync({
+          params: {
+            path: {
+              userId: userToRemove.email, // email field contains the actual userId
+              courseId: courseId,
+              courseVersionId: versionId,
+            },
+          },
+        })
+
+        console.log("Student removed successfully:", userToRemove)
+        setIsRemoveDialogOpen(false)
+        setUserToRemove(null)
+        // Refetch enrollments after removal
+        refetchEnrollments()
+      } catch (error) {
+        console.error("Failed to remove student:", error)
+        // You might want to show an error toast here
+      }
     }
   }
 
@@ -294,8 +327,22 @@ export default function CourseEnrollments() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button className="gap-2 bg-primary hover:bg-accent text-primary-foreground cursor-pointer">
-              Add Student
+            <Button 
+            className="gap-2 bg-primary hover:bg-accent text-primary-foreground cursor-pointer"
+            onClick={() => {
+              // Set course info in store and navigate to invite page
+              const { setCurrentCourse } = useCourseStore.getState();
+              setCurrentCourse({
+                courseId: courseId || "",
+                versionId: versionId || "",
+                moduleId: null,
+                sectionId: null,
+                itemId: null,
+                watchItemId: null,
+              });
+              navigate({to: "/teacher/courses/invite"});
+            }}>
+              Send Invites
             </Button>
           </div>
         </div>
@@ -370,11 +417,14 @@ export default function CourseEnrollments() {
                             <Avatar className="h-12 w-12 border-2 border-primary/20 shadow-md group-hover:border-primary/40 transition-colors duration-200">
                               <AvatarImage src="/placeholder.svg" alt={enrollment.userId} />
                               <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold text-lg">
-                                {enrollment.userId.slice(0, 2).toUpperCase()}
+                                {(enrollment?.user?.firstName?.[0].toUpperCase?.() + enrollment?.user?.lastName?.[0]?.toUpperCase?.()) || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold text-foreground truncate text-lg">{enrollment.userId}</p>
+                              <p className="font-bold text-foreground truncate text-lg">
+                                {(enrollment?.user?.firstName || "" + " " + enrollment?.user?.lastName|| "") || "Unknown User"}
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">{(enrollment?.user?.email) || ""}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -397,6 +447,23 @@ export default function CourseEnrollments() {
                         </TableCell>
                         <TableCell className="py-6 pr-6">
                           <div className="flex items-center gap-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleViewProgress({
+                                  id: enrollment._id,
+                                  name: `User ${enrollment.userId}`,
+                                  email: enrollment.userId, // Store userId in email field for our use
+                                  enrolledDate: enrollment.enrollmentDate,
+                                  progress: 0,
+                                })
+                              }
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 cursor-pointer"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Progress
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -432,8 +499,13 @@ export default function CourseEnrollments() {
                                 })
                               }
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-200 cursor-pointer"
+                              disabled={unenrollMutation.isPending}
                             >
-                              <UserX className="h-4 w-4 mr-2" />
+                              {unenrollMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <UserX className="h-4 w-4 mr-2" />
+                              )}
                               Remove
                             </Button>
                           </div>
@@ -503,9 +575,17 @@ export default function CourseEnrollments() {
                 <Button
                   variant="destructive"
                   onClick={confirmRemoveStudent}
+                  disabled={unenrollMutation.isPending}
                   className="min-w-[100px] shadow-lg cursor-pointer"
                 >
-                  Yes, Remove
+                  {unenrollMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    "Yes, Remove"
+                  )}
                 </Button>
               </div>
             </div>

@@ -211,7 +211,7 @@ export class StopItemBody {
     description: 'Attempt ID for quiz tracking',
     example: '60d5ec49b3f1c8e4a8f8b8c7',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$',
   })
   @IsOptional()
   @IsString()
@@ -614,7 +614,7 @@ export class WatchTimeParams {
   @JSONSchema({
     description: 'user ID to get watch time for',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$'
   })
   @IsNotEmpty()
   @IsString()
@@ -624,7 +624,7 @@ export class WatchTimeParams {
   @JSONSchema({
     description: 'Item ID to get watch time for',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$'
   })
   @IsNotEmpty()
   @IsString()
@@ -636,7 +636,7 @@ export class WatchTimeBody {
   @JSONSchema({
     description: 'Course ID to get watch time for',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$'
   })
   @IsOptional()
   @IsString()
@@ -646,7 +646,7 @@ export class WatchTimeBody {
   @JSONSchema({
     description: 'Course version ID to get watch time for',
     type: 'string',
-    format: 'Mongo Object ID',
+    pattern: '^[a-fA-F0-9]{24}$'
   })
   @IsOptional()
   @IsString()

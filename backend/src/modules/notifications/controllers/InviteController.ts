@@ -87,7 +87,7 @@ export class InviteController {
 
   @Get('/:inviteId')
   @HttpCode(200)
-  @ContentType('html')
+  @ContentType('text/html')
   @OpenAPI({
     summary: 'Process Invite',
     description: 'Process an invite given an inviteId and send a response before redirecting the user.',

@@ -1,6 +1,6 @@
 import createFetchClient from 'openapi-fetch';
 import createClient from 'openapi-react-query';
-import type { paths } from '../types/schema';
+import type { paths } from '../lib/api/schema';
 
 // Helper function to get auth token from localStorage
 const getAuthToken = (): string | null => {

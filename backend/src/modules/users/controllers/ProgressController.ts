@@ -42,6 +42,8 @@ import { WatchTime } from '../classes/transformers/WatchTime.js';
 import { Ability } from '#root/shared/functions/AbilityDecorator.js';
 import { subject } from '@casl/ability';
 import { IAuthService } from '#root/modules/auth/interfaces/IAuthService.js';
+import { AUTH_TYPES } from '#root/modules/auth/types.js';
+import { FirebaseAuthService } from '#root/modules/auth/services/FirebaseAuthService.js';
 
 @OpenAPI({
   tags: ['Progress'],

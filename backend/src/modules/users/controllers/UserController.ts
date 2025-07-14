@@ -19,7 +19,6 @@ import {EditUserBody, GetUserParams, GetUserResponse, UserNotFoundErrorResponse 
 import { AUTH_TYPES } from '#root/modules/auth/types.js';
 import { IAuthService } from '#root/modules/auth/interfaces/IAuthService.js';
 import { UserResponse } from '#root/modules/auth/classes/index.js';
-import { IAuthService } from '#root/modules/auth/interfaces/IAuthService.js';
 
 @OpenAPI({
   tags: ['Users'],

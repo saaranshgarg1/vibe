@@ -33,6 +33,8 @@ import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { EnrollmentActions, getEnrollmentAbility } from '../abilities/enrollmentAbilities.js';
 import { Ability } from '#root/shared/functions/AbilityDecorator.js';
 import { subject } from '@casl/ability';
+import { FirebaseAuthService } from '#root/modules/auth/services/FirebaseAuthService.js';
+import { AUTH_TYPES } from '#root/modules/auth/types.js';
 
 @OpenAPI({
   tags: ['Enrollments'],

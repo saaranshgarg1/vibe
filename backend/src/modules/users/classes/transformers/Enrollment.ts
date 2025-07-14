@@ -89,7 +89,7 @@ export class Enrollment implements IEnrollment {
     description: 'Enrollment creation timestamp',
     type: 'string',
     format: 'date-time',
-    example: '2025-07-01T12:00:00Z',
+    example: '2025-07-01T12:00:00.000Z',
   })
   @IsDateString()
   @IsNotEmpty()
@@ -167,7 +167,7 @@ export class EnrolledUserResponse {
     description: 'Timestamp when the enrollment was created',
     type: 'string',
     format: 'date-time',
-    example: '2025-07-01T12:00:00Z',
+    example: '2025-07-01T12:00:00.000Z',
   })
   @IsDateString()
   @IsNotEmpty()

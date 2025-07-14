@@ -129,7 +129,7 @@ export class EnrollmentDataResponse {
 
   @JSONSchema({
     description: 'Date when the user was enrolled',
-    example: '2023-10-01T12:00:00Z',
+    example: '2023-10-01T12:00:00.000Z',
     type: 'string',
     format: 'date-time',
   })
@@ -181,13 +181,12 @@ export class EnrolledUserResponseData {
 
   @JSONSchema({
     description: 'Date when the user was enrolled',
-    example: '2023-10-01T12:00:00Z',
+    example: '2023-10-01T12:00:00.000Z',
     type: 'string',
     format: 'date-time',
   })
   @IsNotEmpty()
-  @IsDate()
-  @Type(() => Date)
+  @IsDateString()
   enrollmentDate: Date;
 }
 

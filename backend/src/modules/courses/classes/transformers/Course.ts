@@ -73,7 +73,7 @@ class Course implements ICourse {
   @IsDateString()
   @JSONSchema({
     description: 'Timestamp when the course was created',
-    example: '2023-10-01T12:00:00Z',
+    example: '2023-10-01T12:00:00.000Z',
     type: 'string',
     format: 'date-time',
   })
@@ -83,7 +83,7 @@ class Course implements ICourse {
   @IsDateString()
   @JSONSchema({
     description: 'Timestamp when the course was last updated',
-    example: '2023-10-01T12:00:00Z',
+    example: '2023-10-01T12:00:00.000Z',
     type: 'string',
     format: 'date-time',
   })

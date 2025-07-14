@@ -1,4 +1,4 @@
-import {createLogger, format, transports} from 'winston';
+import { createLogger, format, transports } from 'winston';
 import {
   IsArray,
   IsDefined,
@@ -14,8 +14,8 @@ import {
   HttpError,
   UnauthorizedError,
 } from 'routing-controllers';
-import {Request, Response} from 'express';
-import {JSONSchema} from 'class-validator-jsonschema';
+import { Request, Response } from 'express';
+import { JSONSchema } from 'class-validator-jsonschema';
 import { Type } from 'class-transformer';
 
 const logger = createLogger({
@@ -26,7 +26,7 @@ const logger = createLogger({
     // - Write all logs with importance level of `error` or higher to `error.log`
     //   (i.e., error, fatal, but not other levels)
     //
-    new transports.File({filename: 'error.log', level: 'error'}),
+    new transports.File({ filename: 'error.log', level: 'error' }),
     //
     // - Write all logs with importance level of `info` or higher to `combined.log`
     //   (i.e., fatal, error, warn, and info, but not trace)
@@ -76,17 +76,29 @@ class ValidationErrorResponse {
     readOnly: true,
   })
   @IsObject() // Ensures 'constraints' is an object
-  constraints!: {[type: string]: string};
+  constraints!: { [type: string]: string };
 
+  @IsOptional()
   @JSONSchema({
     type: 'array',
-    format: 'ValidationErrorResponse',
-    description: 'Contains all nested validation errors of the property.',
-    items: { $ref: '#/components/schemas/ValidationErrorResponse' },
+    description: 'Nested validation errors (flattened for documentation)',
     readOnly: true,
+    items: {
+      type: 'object',
+      properties: {
+        property: { type: 'string' },
+        constraints: {
+          type: 'object',
+          additionalProperties: { type: 'string' }
+        }
+      },
+      required: ['property', 'constraints']
+    }
   })
-  @IsOptional()
-  children!: ValidationErrorResponse[];
+  children!: {
+    property: string;
+    constraints: Record<string, string>;
+  }[];
 
   @JSONSchema({
     type: 'object',
@@ -95,7 +107,7 @@ class ValidationErrorResponse {
   })
   @IsObject() // Ensures 'contexts' is an object
   @IsOptional() // Makes 'contexts' optional
-  contexts!: {[type: string]: any};
+  contexts!: { [type: string]: any };
 }
 
 class DefaultErrorResponse {
@@ -146,7 +158,7 @@ class InternalServerErrorResponse {
   errors?: ValidationErrorResponse;
 }
 
-@Middleware({type: 'after'})
+@Middleware({ type: 'after' })
 export class HttpErrorHandler implements ExpressErrorMiddlewareInterface {
   error(error: any, request: Request, response: Response): void {
     logger.error({
@@ -249,4 +261,4 @@ export class HttpErrorHandler implements ExpressErrorMiddlewareInterface {
   }
 }
 
-export {DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse, InternalServerErrorResponse};
+export { DefaultErrorResponse, ValidationErrorResponse, BadRequestErrorResponse, InternalServerErrorResponse };

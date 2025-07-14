@@ -1,7 +1,7 @@
 import { EnrollmentRole, ObjectIdToString, StringToObjectId } from '#root/shared/index.js';
 import { Expose, Transform, Type } from 'class-transformer';
-import {IsArray, IsEmail, ArrayNotEmpty, IsNumber, IsString, IsOptional, IsMongoId, IsNotEmpty, IsEnum, ValidateNested, IsIn } from 'class-validator';
-import {JSONSchema} from 'class-validator-jsonschema';
+import { IsArray, IsEmail, ArrayNotEmpty, IsNumber, IsString, IsOptional, IsMongoId, IsNotEmpty, IsEnum, ValidateNested, IsIn } from 'class-validator';
+import { JSONSchema } from 'class-validator-jsonschema';
 import { ObjectId } from 'mongodb';
 
 
@@ -162,8 +162,12 @@ class InviteResponse {
     type: 'array',
     example: [
       {
+        inviteId: '60c72b2f9b1e8d3f4c8b4567',
         email: 'user@example.com',
-        status: 'SENT',
+        inviteStatus: 'PENDING',
+        role: 'STUDENT',
+        courseId: '60c72b2f9b1e8d3f4c8b4567',
+        courseVersionId: '60c72b2f9b1e8d3f4c8b4567',
         userId: '60d21b4667d0d8992e610c01'
       }
     ]

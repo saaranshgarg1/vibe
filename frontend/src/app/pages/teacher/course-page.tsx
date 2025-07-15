@@ -74,8 +74,9 @@ export default function TeacherCoursesPage() {
     return acc
   }, [])
 
+  const navigate = useNavigate()
   const createNewCourse = () => {
-    window.location.href = "/courses/add"
+    navigate({ to: "/teacher/courses/create" })
   }
 
   const handlePageChange = (newPage: number) => {
@@ -736,7 +737,7 @@ function VersionCard({
       watchItemId: null,
     })
     navigate({
-      to: "/student/learn",
+      to: "/teacher/courses/view",
     })
   }
 
@@ -753,14 +754,9 @@ function VersionCard({
     )
   }
 
+  // Hide the version card if there's an error or no version data
   if (versionError || !version) {
-    return (
-      <Card className="bg-card/50 border-l-4 border-l-destructive/40">
-        <CardContent className="p-4">
-          <div className="text-sm text-destructive">Error loading version data</div>
-        </CardContent>
-      </Card>
-    )
+    return null
   }
 
   return (

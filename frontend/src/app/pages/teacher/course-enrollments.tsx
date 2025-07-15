@@ -1,8 +1,8 @@
-"use client"
+"use client"  
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { Search, Users, TrendingUp, CheckCircle, RotateCcw, UserX, BookOpen, FileText, List, Play, AlertTriangle, X, Loader2, Eye, Clock, ChevronRight, ChevronDown, Award, Target, Calendar, User } from 'lucide-react'
+import { Search, Users, TrendingUp, CheckCircle, RotateCcw, UserX, BookOpen, FileText, List, Play, AlertTriangle, X, Loader2, Eye, Clock, ChevronRight, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react'
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { QuizSubmissionDisplay } from "./QuizSubmissionDisplay"
+import { WatchTimeDisplay } from "./WatchTimeDisplay"
 
 // Import hooks - including the new quiz hooks
 import {
@@ -21,11 +22,7 @@ import {
   useItemsBySectionId,
   useCourseVersionEnrollments,
   useResetProgress,
-  useUnenrollUser,
-  useUserProgressPercentageByUserId,
-  useWatchTimeByItemId,
-  useUserQuizMetrics,
-  useQuizSubmission,
+  useUnenrollUser
 } from "@/hooks/hooks"
 import { useCourseStore } from "@/store/course-store"
 import type { EnrolledUser } from "@/types/course.types"
@@ -96,477 +93,41 @@ function generateDefaultItemNames(items: any[]) {
 }
 
 // Component to display progress for each enrolled user
-function EnrollmentProgress({
-  userId,
-  courseId,
-  courseVersionId,
-}: {
-  userId: string
-  courseId: string
-  courseVersionId: string
-}) {
-  const { data: progressData, isLoading } = useUserProgressPercentageByUserId(userId, courseId, courseVersionId)
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-4 w-40">
-        <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden shadow-inner">
-          <div className="h-full rounded-full bg-gray-300 animate-pulse w-full" />
-        </div>
-        <span className="text-sm font-bold text-foreground min-w-[3rem] text-right">--</span>
-      </div>
-    )
-  }
-
-  const progress = progressData ? Math.round(progressData.percentCompleted * 100) : 0
-
+// Accepts either a number (percent or fraction) or an object with a progress property
+function EnrollmentProgress(props: { progress: number }) {
+  // Support both direct number and object prop
+  const progress = props.progress;
   return (
-    <div className="flex items-center gap-4 w-40">
+    <div className={`flex items-center gap-4 w-40 ${getProgressBg(progress)}`}>
       <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden shadow-inner">
         <div
-          className={`h-full rounded-full bg-gradient-to-r transition-all duration-300 ease-out ${
-            progress >= 80
-              ? "from-emerald-500 to-emerald-600"
-              : progress >= 50
-                ? "from-amber-500 to-amber-600"
-                : "from-red-500 to-red-600"
-          }`}
-          style={{ width: `${progress}%` }}
+          className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(progress)}`}
+          style={{
+            width: `${progress.toFixed(1)}%`,
+            transition: "width 0.4s cubic-bezier(0.4,0,0.2,1)",
+          }}
         />
       </div>
-      <span className="text-sm font-bold text-foreground min-w-[3rem] text-right">{progress}%</span>
+      <span className="text-sm font-bold text-foreground min-w-[3rem] text-right">
+        {progress.toFixed(1)}%
+      </span>
     </div>
   )
 }
 
-// Component to display quiz submission details
-function QuizSubmissionDisplay({
-  userId,
-  quizId,
-  itemName,
-}: {
-  userId: string
-  quizId: string
-  itemName?: string
-}) {
-  // First, get quiz metrics to find the latest submission result ID
-  const { data: quizMetrics, isLoading: metricsLoading, error: metricsError } = useUserQuizMetrics(quizId, userId)
-  
-  // Then get submission details using the submission result ID
-  const { 
-    data: submissionData, 
-    isLoading: submissionLoading, 
-    error: submissionError 
-  } = useQuizSubmission(
-    quizId, 
-    quizMetrics?.latestSubmissionResultId || ""
-  )
-
-  if (metricsLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 bg-muted/20 rounded-lg">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">Loading quiz metrics...</span>
-      </div>
-    )
-  }
-
-  if (metricsError) {
-    return (
-      <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-        <p className="text-sm text-red-600 dark:text-red-400">Error loading quiz metrics: {metricsError}</p>
-      </div>
-    )
-  }
-
-  if (!quizMetrics) {
-    return (
-      <div className="p-4 bg-muted/20 rounded-lg">
-        <p className="text-sm text-muted-foreground">No quiz attempt data available.</p>
-      </div>
-    )
-  }
-
-  const displayName = itemName && itemName.trim() !== "" ? itemName : "Quiz 1"
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return {
-      date: date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'SUBMITTED':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Submitted</Badge>
-      case 'ATTEMPTED':
-        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">In Progress</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
-  const getGradingStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PASSED':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Passed</Badge>
-      case 'FAILED':
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Failed</Badge>
-      case 'PENDING':
-        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Pending</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Award className="h-5 w-5 text-primary" />
-        <h4 className="font-semibold text-foreground">Quiz Submission Details</h4>
-      </div>
-
-      {/* Quiz Info Header */}
-      <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-xl border border-border">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">❓</span>
-          <div className="flex-1">
-            <h5 className="font-semibold text-foreground">{displayName}</h5>
-            <p className="text-sm text-muted-foreground">
-              {quizMetrics.attempts.length} {quizMetrics.attempts.length === 1 ? "attempt" : "attempts"} • {quizMetrics.remainingAttempts} remaining
-            </p>
-          </div>
-          {getStatusBadge(quizMetrics.latestAttemptStatus)}
-        </div>
-      </div>
-
-      {/* Quiz Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-blue-600" />
-            <span className="text-sm font-medium">Total Attempts</span>
-          </div>
-          <p className="text-2xl font-bold mt-1">{quizMetrics.attempts.length}</p>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium">Remaining</span>
-          </div>
-          <p className="text-2xl font-bold mt-1">{quizMetrics.remainingAttempts}</p>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium">Status</span>
-          </div>
-          <div className="mt-1">
-            {getStatusBadge(quizMetrics.latestAttemptStatus)}
-          </div>
-        </Card>
-      </div>
-
-      {/* Latest Submission Details */}
-      {quizMetrics.latestSubmissionResultId && (
-        <div className="space-y-4">
-          <Separator />
-          <h6 className="font-medium text-foreground flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Latest Submission Details
-          </h6>
-          
-          {submissionLoading ? (
-            <div className="flex items-center gap-2 p-4 bg-muted/20 rounded-lg">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm text-muted-foreground">Loading submission details...</span>
-            </div>
-          ) : submissionError ? (
-            <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">Error loading submission: {submissionError}</p>
-            </div>
-          ) : submissionData ? (
-            <div className="space-y-4">
-              {/* Submission Info */}
-              <div className="p-4 bg-card border border-border rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Submitted At</p>
-                    <p className="font-semibold">
-                      {(() => {
-                        const { date, time } = formatDateTime(submissionData.submittedAt)
-                        return `${date} at ${time}`
-                      })()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Attempt ID</p>
-                    <p className="font-mono text-sm">{submissionData.attemptId}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Grading Results */}
-              {submissionData.gradingResult && (
-                <div className="p-4 bg-card border border-border rounded-lg">
-                  <h6 className="font-semibold mb-3 flex items-center gap-2">
-                    <Award className="h-4 w-4" />
-                    Grading Results
-                  </h6>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Score</p>
-                      <p className="text-xl font-bold">
-                        {submissionData.gradingResult.totalScore || 0} / {submissionData.gradingResult.totalMaxScore || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Percentage</p>
-                      <p className="text-xl font-bold">
-                        {submissionData.gradingResult.totalMaxScore 
-                          ? Math.round(((submissionData.gradingResult.totalScore || 0) / submissionData.gradingResult.totalMaxScore) * 100)
-                          : 0}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Status</p>
-                      <div className="mt-1">
-                        {getGradingStatusBadge(submissionData.gradingResult.gradingStatus)}
-                      </div>
-                    </div>
-                    {submissionData.gradingResult.gradedAt && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Graded At</p>
-                        <p className="text-sm">
-                          {(() => {
-                            const { date, time } = formatDateTime(submissionData.gradingResult.gradedAt!)
-                            return `${date} ${time}`
-                          })()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Question Feedback */}
-                  {submissionData.gradingResult.overallFeedback && submissionData.gradingResult.overallFeedback.length > 0 && (
-                    <div className="space-y-2">
-                      <h6 className="font-medium text-sm">Question Feedback</h6>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {submissionData.gradingResult.overallFeedback.map((feedback, index) => (
-                          <div key={feedback.questionId} className="p-3 bg-muted/20 rounded-lg">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium">Question {index + 1}</span>
-                              <div className="flex items-center gap-2">
-                                <Badge 
-                                  variant={feedback.status === 'CORRECT' ? 'default' : feedback.status === 'PARTIAL' ? 'secondary' : 'destructive'}
-                                  className="text-xs"
-                                >
-                                  {feedback.status}
-                                </Badge>
-                                <span className="text-sm font-bold">{feedback.score} pts</span>
-                              </div>
-                            </div>
-                            {feedback.answerFeedback && (
-                              <p className="text-xs text-muted-foreground">{feedback.answerFeedback}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-4 bg-muted/20 rounded-lg">
-              <p className="text-sm text-muted-foreground">No submission details available.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* All Attempts History */}
-      {quizMetrics.attempts.length > 0 && (
-        <div className="space-y-3">
-          <Separator />
-          <h6 className="font-medium text-foreground">All Attempts</h6>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {quizMetrics.attempts.map((attempt, index) => (
-              <div key={attempt.attemptId} className="p-3 bg-card border border-border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">#{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Attempt {index + 1}</p>
-                      <p className="text-sm text-muted-foreground">ID: {attempt.attemptId}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {attempt.submissionResultId && (
-                      <Badge variant="outline" className="text-xs">
-                        Submitted
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+const getProgressColor = (progress: number) => {
+  if (progress >= 80) return "from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-emerald-500"
+  if (progress >= 50) return "from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500"
+  return "from-red-500 to-red-600 dark:from-red-400 dark:to-red-500"
 }
 
-// Component to display watch time data for selected item
-function WatchTimeDisplay({
-  userId,
-  itemId,
-  itemName,
-  itemType,
-}: {
-  userId: string
-  itemId: string
-  itemName?: string
-  itemType?: string
-}) {
-  const { data: watchTimeData, isLoading, error } = useWatchTimeByItemId(userId, itemId)
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 p-4 bg-muted/20 rounded-lg">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">Loading watch time...</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-        <p className="text-sm text-red-600 dark:text-red-400">Error: {error}</p>
-      </div>
-    )
-  }
-
-  if (!watchTimeData || watchTimeData.length === 0) {
-    return (
-      <div className="p-4 bg-muted/20 rounded-lg">
-        <p className="text-sm text-muted-foreground">No watch time data available for this item.</p>
-      </div>
-    )
-  }
-
-  const totalAttempts = watchTimeData.length
-
-  const getItemIcon = (type: string) => {
-    switch (type?.toUpperCase()) {
-      case "VIDEO":
-        return "🎥"
-      case "QUIZ":
-        return "❓"
-      case "ARTICLE":
-      case "BLOG":
-        return "📖"
-      default:
-        return "📄"
-    }
-  }
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return {
-      date: date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }),
-      time: date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      }),
-    }
-  }
-
-  // Generate default name if item name is empty
-  const displayName =
-    itemName && itemName.trim() !== ""
-      ? itemName
-      : `${itemType ? itemType.charAt(0).toUpperCase() + itemType.slice(1).toLowerCase() : "Item"} 1`
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-primary" />
-        <h4 className="font-semibold text-foreground">Watch Time Details</h4>
-      </div>
-
-      {/* Item Info Header */}
-      <div className="p-4 bg-gradient-to-r from-muted/30 to-muted/10 rounded-xl border border-border">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{getItemIcon(itemType || "")}</span>
-          <div className="flex-1">
-            <h5 className="font-semibold text-foreground">{displayName}</h5>
-            <p className="text-sm text-muted-foreground">
-              {totalAttempts} {totalAttempts === 1 ? "attempt" : "attempts"} recorded
-            </p>
-          </div>
-          <Badge variant="secondary" className="font-medium">
-            {totalAttempts} {totalAttempts === 1 ? "Attempt" : "Attempts"}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Attempts List */}
-      <div className="space-y-3">
-        <h6 className="font-medium text-foreground">Attempt History</h6>
-        <div className="space-y-2 max-h-60 overflow-y-auto">
-          {watchTimeData.map((attempt: any, index: number) => {
-            const { date, time } = formatDateTime(attempt.startTime)
-            return (
-              <div key={attempt._id} className="p-3 bg-card border border-border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">#{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Attempt {index + 1}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {date} at {time}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="text-xs">
-                      {new Date(attempt.startTime).toLocaleString()}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
+const getProgressBg = (progress: number) => {
+  if (progress >= 80) return "bg-emerald-50 dark:bg-emerald-950/30"
+  if (progress >= 50) return "bg-amber-50 dark:bg-amber-950/30"
+  return "bg-red-50 dark:bg-red-950/30"
 }
+
+
 
 export default function CourseEnrollments() {
   const navigate = useNavigate()
@@ -649,6 +210,7 @@ export default function CourseEnrollments() {
     }
     return 0
   })
+  console.log("Sorted Users:", sortedUsers)
 
   // Sorting handler
   const handleSort = (column: 'name' | 'enrollmentDate' | 'progress') => {
@@ -685,6 +247,7 @@ export default function CourseEnrollments() {
   }
 
   const handleViewProgress = (user: EnrolledUser) => {
+    console.log("Viewing progress for user:", user)
     setSelectedUser(user)
     setIsViewProgressDialogOpen(true)
   }
@@ -696,11 +259,12 @@ export default function CourseEnrollments() {
 
   const confirmRemoveStudent = async () => {
     if (userToRemove && courseId && versionId) {
+      console.log("Removing student:", userToRemove)
       try {
         await unenrollMutation.mutateAsync({
           params: {
             path: {
-              userId: userToRemove.email,
+              userId: userToRemove.id ,
               courseId: courseId,
               courseVersionId: versionId,
             },
@@ -719,7 +283,7 @@ export default function CourseEnrollments() {
     if (!selectedUser || !courseId || !versionId) return
 
     try {
-      const userId = selectedUser.email
+      const userId = selectedUser.id;
       const requestBody: any = {}
 
       if (resetScope === "module" && selectedModule) {
@@ -831,11 +395,11 @@ export default function CourseEnrollments() {
   const averageProgress =
     totalUsers > 0
       ? (
-          filteredUsers.reduce(
-            (sum: number, enrollment: any) => sum + ((enrollment.progress?.percentCompleted || 0) * 100),
-            0
-          ) / totalUsers
-        ).toFixed(1)
+        filteredUsers.reduce(
+          (sum: number, enrollment: any) => sum + ((enrollment.progress?.percentCompleted || 0) * 100),
+          0
+        ) / totalUsers
+      ).toFixed(1)
       : 0
 
   const stats = [
@@ -1017,10 +581,15 @@ export default function CourseEnrollments() {
                         <TableCell className="pl-6 py-6">
                           <div className="flex items-center gap-4">
                             <Avatar className="h-12 w-12 border-2 border-primary/20 shadow-md group-hover:border-primary/40 transition-colors duration-200">
-                              <AvatarImage src="/placeholder.svg" alt={enrollment.userId} />
+                              <AvatarImage src="/placeholder.svg" alt={enrollment.email} />
                               <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold text-lg">
-
-                                {(enrollment?.user?.firstName?.[0].toUpperCase?.() + enrollment?.user?.lastName?.[0]?.toUpperCase?.()) || '?'}
+                                {[
+                                  enrollment?.user?.firstName?.[0],
+                                  enrollment?.user?.lastName?.[0],
+                                ]
+                                  .filter(Boolean)
+                                  .map((ch) => ch.toUpperCase())
+                                  .join('') || (enrollment?.user?.firstName?.[0]?.toUpperCase() || enrollment?.user?.lastName?.[0]?.toUpperCase() || '?')}
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">
@@ -1041,25 +610,7 @@ export default function CourseEnrollments() {
                           </div>
                         </TableCell>
                         <TableCell className="py-6">
-                          <EnrollmentProgress
-                            userId={enrollment.userId}
-                            courseId={courseId || ""}
-                            courseVersionId={versionId || ""}
-                          />
-                          <div className={`flex items-center gap-4 w-40 ${getProgressBg(enrollment.progress?.percentCompleted * 100 || 0)}`}>
-                            <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden shadow-inner">
-                              <div
-                                className={`h-full rounded-full bg-gradient-to-r ${getProgressColor(enrollment.progress?.percentCompleted * 100 || 0)}`}
-                                style={{
-                                  width: `${((enrollment.progress?.percentCompleted || 0) * 100).toFixed(1)}%`,
-                                  transition: "width 0.4s cubic-bezier(0.4,0,0.2,1)",
-                                }}
-                              />
-                            </div>
-                            <span className="text-sm font-bold text-foreground min-w-[3rem] text-right">
-                              {((enrollment.progress?.percentCompleted || 0) * 100).toFixed(1)}%
-                            </span>
-                          </div>
+                          <EnrollmentProgress progress={(enrollment.progress?.percentCompleted || 0) * 100} />
                         </TableCell>
                         <TableCell className="py-6 pr-6">
                           <div className="flex items-center gap-3">
@@ -1068,11 +619,11 @@ export default function CourseEnrollments() {
                               size="sm"
                               onClick={() =>
                                 handleViewProgress({
-                                  id: enrollment._id,
+                                  id: enrollment.user.userId,
                                   name: `${enrollment?.user?.firstName} ${enrollment?.user?.lastName}`,
                                   email: enrollment.userId,
                                   enrolledDate: enrollment.enrollmentDate,
-                                  progress: 0,
+                                  progress: enrollment.progress?.percentCompleted,
                                 })
                               }
                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 cursor-pointer"
@@ -1085,7 +636,7 @@ export default function CourseEnrollments() {
                               size="sm"
                               onClick={() =>
                                 handleResetProgress({
-                                  id: enrollment._id,
+                                  id: enrollment.user.userId,
                                   name: `${enrollment?.user?.firstName} ${enrollment?.user?.lastName}`,
                                   email: enrollment.userId,
                                   enrolledDate: enrollment.enrollmentDate,
@@ -1107,9 +658,9 @@ export default function CourseEnrollments() {
                               size="sm"
                               onClick={() =>
                                 handleRemoveStudent({
-                                  id: enrollment._id,
+                                  id: enrollment.user.userId,
                                   name: `${enrollment?.user?.firstName} ${enrollment?.user?.lastName}`,
-                                  email: enrollment.userId,
+                                  email: enrollment.user.email,
                                   enrolledDate: enrollment.enrollmentDate,
                                   progress: 0,
                                 })
@@ -1175,11 +726,7 @@ export default function CourseEnrollments() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Course Progress</p>
-                  <EnrollmentProgress
-                    userId={selectedUser.email}
-                    courseId={courseId || ""}
-                    courseVersionId={versionId || ""}
-                  />
+                  <EnrollmentProgress progress={(selectedUser.progress || 0) * 100} />
                 </div>
               </div>
 
@@ -1232,6 +779,8 @@ export default function CourseEnrollments() {
                                     setSelectedViewItem(itemId)
                                     setSelectedViewItemType(itemType)
                                     setSelectedViewItemName(itemName)
+                                    console.log("Selected Item:", itemId, itemType, itemName)
+                                    console.log("selected vars", selectedViewItem, selectedViewItemType, selectedViewItemName)
                                   }}
                                   getItemIcon={getItemIcon}
                                 />
@@ -1249,15 +798,17 @@ export default function CourseEnrollments() {
               {selectedViewItem && (
                 <div className="space-y-4">
                   {selectedViewItemType?.toUpperCase() === 'QUIZ' ? (
-                    <QuizSubmissionDisplay 
-                      userId={selectedUser.email} 
+                    <QuizSubmissionDisplay
+                      userId={selectedUser.id}
                       quizId={selectedViewItem}
                       itemName={selectedViewItemName}
                     />
                   ) : (
-                    <WatchTimeDisplay 
-                      userId={selectedUser.email} 
+                    <WatchTimeDisplay
+                      userId={selectedUser.id}
                       itemId={selectedViewItem}
+                      courseId={courseId!}
+                      courseVersionId={versionId}
                       itemName={selectedViewItemName}
                       itemType={selectedViewItemType}
                     />
@@ -1679,9 +1230,8 @@ function SectionItems({
       {itemsWithDefaultNames.map((item: any) => (
         <div
           key={item._id}
-          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-            selectedViewItem === item._id ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/10"
-          }`}
+          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedViewItem === item._id ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/10"
+            }`}
           onClick={() => onItemSelect(item._id, item.type, item.displayName)}
         >
           <span className="text-lg">{getItemIcon(item.type)}</span>

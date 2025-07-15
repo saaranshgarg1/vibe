@@ -778,7 +778,7 @@ export function useResetProgress(): {
   reset: () => void,
   status: 'idle' | 'pending' | 'success' | 'error'
 } {
-  const result = api.useMutation("patch", "/users/{userId}progress/courses/{courseId}/versions/{courseVersionId}/reset");
+  const result = api.useMutation("patch", "/users/{userId}/progress/courses/{courseId}/versions/{courseVersionId}/reset");
   return {
     ...result,
     error: result.error ? (result.error.message || 'Failed to reset progress') : null
@@ -942,7 +942,7 @@ export function useQuizSubmission(quizId: string, submissionId: string): {
   error: string | null,
   refetch: () => void
 } {
-  const result = api.useQuery("get", "/quiz/{quizId}/submissions/{submissionId}", {
+  const result = api.useQuery("get", "/quizzes/quiz/{quizId}/submissions/{submissionId}", {
     params: { path: { quizId, submissionId } }
   }, {enabled: !!quizId && !!submissionId}
 );
@@ -950,7 +950,7 @@ export function useQuizSubmission(quizId: string, submissionId: string): {
   return {
     data: result.data,
     isLoading: result.isLoading,
-    error: result.error ? (result.error.message ? result.error.message : "ERROR HERE") : null,
+    error: result.error ? (result.error.message ? result.error.message : "Cannot fetch Quiz submission details.") : null,
     refetch: result.refetch
   };
 }
@@ -1107,15 +1107,15 @@ export function useCancelInvite(): {
 }
 
 // GET /users/{id}/watchTime/item/itemId
-export function useWatchTimeByItemId(userId: string, itemId: string): {
+export function useWatchTimeByItemId(userId: string, courseId: string, courseVersionId: string, itemId: string, type: string ): {
   data:  undefined,
   isLoading: boolean,
   error: string | null,
   refetch: () => void
 } {
-  const result = api.useQuery("get", "/users/{id}/watchTime/item/{itemId}", {
-    params: { path: { id: userId, itemId } }
-  }, { enabled: !!userId && !!itemId });
+  const result = api.useQuery("get", "/users/{id}/watchTime/course/{courseId}/version/{courseVersionId}/item/{itemId}/type/{type}", {
+    params: { path: { id: userId, courseId: courseId, courseVersionId: courseVersionId, itemId: itemId, type:type} },
+  }, { enabled: !!userId && !!itemId && !!type },);
 
   return {
     data: result.data,

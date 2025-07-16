@@ -46,8 +46,8 @@ export class EnrollmentController {
     @inject(USERS_TYPES.EnrollmentService)
     private readonly enrollmentService: EnrollmentService,
 
-    @inject(AUTH_TYPES.AuthService)
-    private readonly authService: FirebaseAuthService,
+    // @inject(AUTH_TYPES.AuthService)
+    // private readonly authService: FirebaseAuthService,
   ) { }
 
   @OpenAPI({

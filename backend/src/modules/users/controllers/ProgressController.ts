@@ -55,8 +55,8 @@ class ProgressController {
     @inject(USERS_TYPES.ProgressService)
     private readonly progressService: ProgressService,
     
-    @inject(AUTH_TYPES.AuthService)
-    private readonly authService: FirebaseAuthService,
+    // @inject(AUTH_TYPES.AuthService)
+    // private readonly authService: FirebaseAuthService,
   ) {}
 
   @OpenAPI({

@@ -1572,6 +1572,40 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        User: {
+            /**
+             * @description MongoDB Object ID of the user
+             * @example 60d5ec49b3f1c8e4a8f8b8c7
+             */
+            _id?: string;
+            /**
+             * @description Firebase UID of the user
+             * @example a1b2c3d4e5f6
+             */
+            firebaseUID: string;
+            /**
+             * Format: email
+             * @description Email address of the user
+             * @example user@example.com
+             */
+            email: string;
+            /**
+             * @description First name of the user
+             * @example John
+             */
+            firstName: string;
+            /**
+             * @description Last name of the user
+             * @example Doe
+             */
+            lastName: string;
+            /**
+             * @description Role of the user
+             * @example user
+             * @enum {string}
+             */
+            roles: "admin" | "user";
+        };
         Course: {
             /**
              * @description Unique identifier for the course
@@ -1581,13 +1615,13 @@ export interface components {
             /**
              * Format: date-time
              * @description Timestamp when the course was created
-             * @example 2023-10-01T12:00:00Z
+             * @example 2023-10-01T12:00:00.000Z
              */
             createdAt: string;
             /**
              * Format: date-time
              * @description Timestamp when the course was last updated
-             * @example 2023-10-01T12:00:00Z
+             * @example 2023-10-01T12:00:00.000Z
              */
             updatedAt: string;
         };
@@ -2118,7 +2152,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Enrollment creation timestamp
-             * @example 2025-07-01T12:00:00Z
+             * @example 2025-07-01T12:00:00.000Z
              */
             enrollmentDate: string;
         };
@@ -2145,7 +2179,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Timestamp when the enrollment was created
-             * @example 2025-07-01T12:00:00Z
+             * @example 2025-07-01T12:00:00.000Z
              */
             enrollmentDate: string;
         };
@@ -2250,8 +2284,12 @@ export interface components {
              * @description Array of invite results
              * @example [
              *       {
+             *         "inviteId": "60c72b2f9b1e8d3f4c8b4567",
              *         "email": "user@example.com",
-             *         "status": "SENT",
+             *         "inviteStatus": "PENDING",
+             *         "role": "STUDENT",
+             *         "courseId": "60c72b2f9b1e8d3f4c8b4567",
+             *         "courseVersionId": "60c72b2f9b1e8d3f4c8b4567",
              *         "userId": "60d21b4667d0d8992e610c01"
              *       }
              *     ]
@@ -2267,11 +2305,13 @@ export interface components {
             readonly value: Record<string, never>;
             /** @description Constraints that failed validation with error messages. */
             readonly constraints: Record<string, never>;
-            /**
-             * Format: ValidationErrorResponse
-             * @description Contains all nested validation errors of the property.
-             */
-            readonly children?: components["schemas"]["ValidationErrorResponse"][];
+            /** @description Nested validation errors (flattened for documentation) */
+            readonly children?: {
+                property: string;
+                constraints: {
+                    [key: string]: string;
+                };
+            }[];
             /** @description Contains all nested validation errors of the property. */
             readonly contexts?: Record<string, never>;
         };
@@ -2367,7 +2407,6 @@ export interface components {
              */
             moduleId: string;
             /**
-             * Format: Mongo Object ID
              * @description Attempt ID for quiz tracking
              * @example 60d5ec49b3f1c8e4a8f8b8c7
              */
@@ -2531,27 +2570,15 @@ export interface components {
             readonly message: string;
         };
         WatchTimeParams: {
-            /**
-             * Format: Mongo Object ID
-             * @description user ID to get watch time for
-             */
+            /** @description user ID to get watch time for */
             userId: string;
-            /**
-             * Format: Mongo Object ID
-             * @description Item ID to get watch time for
-             */
+            /** @description Item ID to get watch time for */
             itemId: string;
         };
         WatchTimeBody: {
-            /**
-             * Format: Mongo Object ID
-             * @description Course ID to get watch time for
-             */
+            /** @description Course ID to get watch time for */
             courseId?: string;
-            /**
-             * Format: Mongo Object ID
-             * @description Course version ID to get watch time for
-             */
+            /** @description Course version ID to get watch time for */
             versionId?: string;
         };
         EnrollmentParams: {
@@ -2576,6 +2603,8 @@ export interface components {
              * @example 60d5ec49b3f1c8e4a8f8b8d2
              */
             readonly _id: string;
+            /** @description User object associated with this enrollment */
+            user: Record<string, never>;
             /**
              * @description User ID associated with this enrollment
              * @example 60d5ec49b3f1c8e4a8f8b8c1
@@ -2606,7 +2635,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Date when the user was enrolled
-             * @example 2023-10-01T12:00:00Z
+             * @example 2023-10-01T12:00:00.000Z
              */
             enrollmentDate: string;
         };
@@ -2632,7 +2661,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Date when the user was enrolled
-             * @example 2023-10-01T12:00:00Z
+             * @example 2023-10-01T12:00:00.000Z
              */
             enrollmentDate: string;
         };
@@ -4741,7 +4770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    html: components["schemas"]["MessageResponse"];
+                    "text/html": components["schemas"]["MessageResponse"];
                 };
             };
         };

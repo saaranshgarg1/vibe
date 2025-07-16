@@ -78,10 +78,10 @@ export class EnrollmentDataResponse {
 
   @JSONSchema({
     description: 'User object associated with this enrollment',
-    type: 'object',
-    items: { $ref: '#/components/schemas/User' },
+    type: 'object'
   })
-  @ValidateNested()
+  @Type(() => User)
+  @ValidateNested( {each: true} )
   user?:User
 
   @JSONSchema({
@@ -151,8 +151,7 @@ export class EnrollmentDataResponse {
 export class EnrollUserResponseData {
   @JSONSchema({
     description: 'Enrollment data for the user',
-    type: 'object',
-    items: { $ref: '#/components/schemas/EnrollmentDataResponse' },
+    type: 'object'
   })
   @ValidateNested()
   @Type(() => EnrollmentDataResponse)
@@ -161,8 +160,7 @@ export class EnrollUserResponseData {
 
   @JSONSchema({
     description: 'Progress data for the user',
-    type: 'object',
-    items: { $ref: '#/components/schemas/ProgressDataResponse' },
+    type: 'object'
   })
   @IsNotEmpty()
   @ValidateNested()

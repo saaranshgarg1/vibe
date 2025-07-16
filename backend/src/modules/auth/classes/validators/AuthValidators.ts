@@ -1,9 +1,13 @@
+import { ID } from '#root/shared/index.js';
 import {
   IsEmail,
   IsNotEmpty,
   MinLength,
   IsAlpha,
   IsString,
+  Matches,
+  IsOptional,
+  IsMongoId,
 } from 'class-validator';
 import {JSONSchema} from 'class-validator-jsonschema';
 
@@ -42,7 +46,7 @@ class SignUpBody {
     example: 'John',
     type: 'string',
   })
-  @IsAlpha()
+  @Matches(/^[A-Za-z ]+$/)
   firstName: string;
 
   @JSONSchema({
@@ -51,8 +55,9 @@ class SignUpBody {
     example: 'Smith',
     type: 'string',
   })
-  @IsAlpha()
-  lastName: string;
+  @Matches(/^[A-Za-z ]+$/)
+  @IsOptional()
+  lastName?: string;
 }
 
 class GoogleSignUpBody {
@@ -72,7 +77,7 @@ class GoogleSignUpBody {
     example: 'John',
     type: 'string',
   })
-  @IsAlpha()
+  @Matches(/^[A-Za-z ]+$/)
   firstName: string;
 
   @JSONSchema({
@@ -81,8 +86,9 @@ class GoogleSignUpBody {
     example: 'Smith',
     type: 'string',
   })
-  @IsAlpha()
-  lastName: string;
+  @Matches(/^[A-Za-z ]+$/)
+  @IsOptional()
+  lastName?: string;
 }
 
 class VerifySignUpProviderBody {
@@ -111,6 +117,7 @@ class ChangePasswordBody {
     minLength: 8,
     writeOnly: true,
   })
+  @IsString()
   newPassword: string;
 
   @JSONSchema({
@@ -127,6 +134,7 @@ class ChangePasswordBody {
     minLength: 8,
     writeOnly: true,
   })
+  @IsString()
   newPasswordConfirm: string;
 }
 
@@ -232,6 +240,65 @@ class LoginBody {
   @IsNotEmpty()
   @MinLength(8)
   password: string;
+}
+
+export class UserResponse {
+  @JSONSchema({
+    description: 'Unique identifier for the user',
+    type: 'string',
+    pattern: '^[a-fA-F0-9]{24}$',
+    example: '60d5ec49b3f1c8e4a8f8b8d1',
+  })
+  @IsOptional()
+  @IsMongoId()
+  _id?: ID;
+
+  @JSONSchema({
+    description: 'Firebase UID associated with the user',
+    type: 'string',
+    example: 'firebase-uid-123456',
+  })
+  @IsString()
+  @IsNotEmpty()
+  firebaseUID: string;
+
+  @JSONSchema({
+    description: 'Email address of the user',
+    type: 'string',
+    format: 'email',
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @JSONSchema({
+    description: 'First name of the user',
+    type: 'string',
+    example: 'John',
+  })
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @JSONSchema({
+    description: 'Last name of the user',
+    type: 'string',
+    example: 'Doe',
+  })
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @JSONSchema({
+    description: 'Role of the user',
+    type: 'string',
+    enum: ['admin', 'user'],
+    example: 'user',
+  })
+  @IsString()
+  @IsNotEmpty()
+  roles: 'admin' | 'user';
 }
 
 export const AUTH_VALIDATORS = [

@@ -186,6 +186,21 @@ export class EnrollmentService extends BaseService {
     });
   }
 
+  async getAllEnrollments(userId: string) {
+    return this._withTransaction(async (session: ClientSession) => {
+      const result = await this.enrollmentRepo.getAllEnrollments(
+        userId,
+        session
+      );
+      return result.map(enrollment => ({
+        ...enrollment,
+        _id: enrollment._id.toString(),
+        courseId: enrollment.courseId.toString(),
+        courseVersionId: enrollment.courseVersionId.toString(),
+      }));
+    });
+  }
+
   async getCourseVersionEnrollments(
     courseId: string,
     courseVersionId: string,
@@ -213,11 +228,16 @@ export class EnrollmentService extends BaseService {
       // Create enriched enrollments with user data
       const resultWithUsers = [];
       for (var i = 0; i < result.length; i++) {
-        const user = await this.userRepo.findById(result[i].userId);
-        resultWithUsers.push({
-          ...result[i],
-          user: user,
-        });
+        try {
+          const user = await this.userRepo.findById(result[i].userId);
+          resultWithUsers.push({
+            ...result[i],
+            user: user,
+          });
+        }
+        catch (error) {
+          console.log(result[i].userId, error);
+        }
       }
       
       // find user for each enrollment

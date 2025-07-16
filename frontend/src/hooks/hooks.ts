@@ -21,7 +21,7 @@ export function useLogin(): {
   error: string | null,
   refetch: () => void
 } {
-  const result = api.useQuery("post", "/auth/verify", {});
+  const result = api.useQuery("post", "/api/auth/signup/google", {});
   
   return {
     data: result.data,

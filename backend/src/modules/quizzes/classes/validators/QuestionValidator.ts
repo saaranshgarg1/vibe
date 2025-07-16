@@ -25,6 +25,7 @@ import {
   IsInt,
   Max,
   Min,
+  Length,
 } from 'class-validator';
 import { ObjectId } from 'mongodb';
 import { NATQuestion } from '../transformers/Question.js';
@@ -91,6 +92,7 @@ class LotOrder implements ILotOrder {
   @Type(() => LotItem)
   @JSONSchema({
     description: 'Lot item to be ordered',
+    type: 'object'
   })
   lotItem: ILotItem;
 
@@ -327,7 +329,7 @@ class QuestionBody {
 
     if (!type) {
       // Fallback to a base type or throw during runtime use only
-      return Object;
+      return SOLSolution;
     }
 
     const question = type.object.question as Question;
@@ -383,18 +385,18 @@ class QuestionBody {
     | IDESSolution;
 }
 
-class QuestionResponse
-  extends Question
+class QuestionResponse extends Question
   implements
-  Partial<ISOLSolution>,
-  Partial<ISMLSolution>,
-  Partial<IOTLSolution>,
-  Partial<NATQuestion>,
-  Partial<DESSolution> {
+    Partial<ISOLSolution>,
+    Partial<ISMLSolution>,
+    Partial<IOTLSolution>,
+    Partial<NATQuestion>,
+    Partial<DESSolution> {
+
   @IsNotEmpty()
   @IsMongoId()
   @JSONSchema({
-    description: 'ID of the question',
+    description: 'Question ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c87',
   })
@@ -403,7 +405,7 @@ class QuestionResponse
   @IsOptional()
   @IsString()
   @JSONSchema({
-    description: 'Descriptive solution text',
+    description: 'Solution explanation',
     type: 'string',
     example: 'The answer is found by adding 2 and 2.',
   })
@@ -415,7 +417,7 @@ class QuestionResponse
   @Max(10)
   @Min(0)
   @JSONSchema({
-    description: 'Decimal precision for the answer',
+    description: 'Answer precision (decimal places)',
     type: 'number',
     example: 2,
     minimum: 0,
@@ -426,7 +428,7 @@ class QuestionResponse
   @IsOptional()
   @IsNumber()
   @JSONSchema({
-    description: 'Upper limit for the answer',
+    description: 'Answer upper limit',
     type: 'number',
     example: 100,
   })
@@ -435,7 +437,7 @@ class QuestionResponse
   @IsOptional()
   @IsNumber()
   @JSONSchema({
-    description: 'Lower limit for the answer',
+    description: 'Answer lower limit',
     type: 'number',
     example: 0,
   })
@@ -444,7 +446,7 @@ class QuestionResponse
   @IsOptional()
   @IsNumber()
   @JSONSchema({
-    description: 'Value of the answer (optional)',
+    description: 'Expected answer value',
     type: 'number',
     example: 42,
   })
@@ -453,7 +455,7 @@ class QuestionResponse
   @IsOptional()
   @IsString()
   @JSONSchema({
-    description: 'Expression for the answer (optional)',
+    description: 'Expected answer expression',
     type: 'string',
     example: '21 * 2',
   })
@@ -461,9 +463,9 @@ class QuestionResponse
 
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => LotItem)
+  @Type(() => LotOrder)
   @JSONSchema({
-    description: 'Ordering of lot items',
+    description: 'Correct item order',
     type: 'array',
     items: { $ref: '#/components/schemas/LotOrder' },
     example: [
@@ -477,7 +479,7 @@ class QuestionResponse
   @ValidateNested({ each: true })
   @Type(() => LotItem)
   @JSONSchema({
-    description: 'Correct lot items',
+    description: 'List of correct items',
     type: 'array',
     items: { $ref: '#/components/schemas/LotItem' },
     example: [
@@ -491,7 +493,7 @@ class QuestionResponse
   @ValidateNested({ each: true })
   @Type(() => LotItem)
   @JSONSchema({
-    description: 'Incorrect lot items',
+    description: 'List of incorrect items',
     type: 'array',
     items: { $ref: '#/components/schemas/LotItem' },
     example: [
@@ -505,7 +507,7 @@ class QuestionResponse
   @ValidateNested()
   @Type(() => LotItem)
   @JSONSchema({
-    description: 'Correct lot item',
+    description: 'Single correct item',
     $ref: '#/components/schemas/LotItem',
     example: { text: 'Option A', explaination: 'Correct because...' },
   })
@@ -516,7 +518,7 @@ class QuestionId {
   @IsMongoId()
   @IsNotEmpty()
   @JSONSchema({
-    description: 'ID of the question',
+    description: 'Question ID',
     type: 'string',
     example: '60d21b4667d0d8992e610c87',
   })
@@ -535,6 +537,73 @@ class QuestionNotFoundErrorResponse {
   message: string;
 }
 
+/**
+ * Request body for flagging a question
+ */
+class FlagQuestionBody {
+  @IsNotEmpty()
+  @IsString()
+  @Length(10, 500)
+  @JSONSchema({
+    description: 'Reason for flagging the question',
+    type: 'string',
+    example: 'This question contains inappropriate content',
+    minLength: 10,
+    maxLength: 500,
+  })
+  reason: string;
+
+  @IsOptional()
+  @IsString()
+  @IsMongoId()
+  @JSONSchema({
+    description: 'course id for the question',
+    type: 'string',
+    example: '6864be0c86bc95b1c9e49e19',
+  })
+  courseId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsMongoId()
+  @JSONSchema({
+    description: 'version id for the question',
+    type: 'string',
+    example: '6864be0c86bc95b1c9e49e19',
+  })
+  versionId?: string;
+}
+
+/**
+ * URL parameters for resolving a flag
+ */
+class FlagId {
+  @IsMongoId()
+  @IsNotEmpty()
+  @JSONSchema({
+    description: 'ID of the flag to resolve',
+    type: 'string',
+    example: '60d21b4667d0d8992e610c87',
+  })
+  flagId: string;
+}
+
+/**
+ * Request body for resolving a flag
+ */
+class ResolveFlagBody {
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(['RESOLVED', 'REJECTED'])
+  @JSONSchema({
+    description: 'Status to set for the flag',
+    type: 'string',
+    enum: ['RESOLVED', 'REJECTED'],
+    example: 'RESOLVED',
+  })
+  status: 'RESOLVED' | 'REJECTED';
+}
+
 export {
   QuestionBody,
   QuestionId,
@@ -549,6 +618,9 @@ export {
   LotItem,
   LotOrder,
   QuestionNotFoundErrorResponse,
+  FlagQuestionBody,
+  FlagId,
+  ResolveFlagBody,
 };
 
 export const QUESTION_VALIDATORS = [
@@ -565,4 +637,7 @@ export const QUESTION_VALIDATORS = [
   LotItem,
   LotOrder,
   QuestionNotFoundErrorResponse,
+  FlagQuestionBody,
+  FlagId,
+  ResolveFlagBody,
 ]

@@ -1,70 +1,126 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
-# Save current branch name
-prev_branch=$(git symbolic-ref --short HEAD)
+#========================================
+# Configuration
+#========================================
+DEPLOY_BRANCH="deploy"
+STASH_MSG="pre-deploy-stash"
 
-# Stash uncommitted changes
-git stash push -u -m "pre-deploy-stash"
-
-# Switch to deploy branch
-git checkout deploy
-
-# Remove all tracked files from index
-git rm -r --cached .
-
-# Restore files from previous branch
-git checkout "$prev_branch" -- .
-
-# Apply stashed changes
-git stash apply
-
-# Stage all changes
-git add -A
-
-# Show staged files
-git diff --cached --name-only
-
-# Confirm commit and push
-read -p "❓ Do you want to continue with commit and push? [y/N] " confirm
-case "$confirm" in
-    [yY][eE][sS]|[yY])
-        echo "✅ Committing..."
-        ;;
-    *)
-        echo "❌ Aborted."
-        exit 1
-        ;;
-esac
-
-# Function to revert changes on error
-cleanup_on_error() {
-    echo "⚠️  Error occurred. Reverting changes..."
-    git reset --hard HEAD
-    git checkout "$prev_branch"
-    git stash pop || true
-    exit 1
+#========================================
+# Helpers
+#========================================
+error_exit() {
+  echo "❌ ERROR: $1"
+  cleanup
+  exit 1
 }
 
-# Trap errors and run cleanup
-trap 'cleanup_on_error' ERR
+cleanup() {
+  # undo workspace changes
+  echo "⚠️  Cleaning up..."
+  # Reset any partial index changes
+  git reset --hard HEAD || true
+  # Return to previous branch if set
+  if [[ -n "${PREV_BRANCH:-}" ]]; then
+    git checkout "${PREV_BRANCH}" || true
+  fi
+  # Pop stash if still present
+  if git stash list | grep -q "${STASH_MSG}"; then
+    git stash pop --index || true
+  fi
+}
+
+prompt_continue() {
+  local prompt_msg="$1"
+  read -rp "$prompt_msg [y/N]: " ans
+  case "$ans" in
+    [yY]|[yY][eE][sS]) return 0 ;;  *) return 1 ;;
+  esac
+}
+
+trap 'error_exit "An unexpected error occurred."' ERR
+trap 'echo "\nInterrupted."; cleanup; exit 1' INT TERM
+
+#========================================
+# Main flow
+#========================================
+
+# Save current branch
+PREV_BRANCH=$(git symbolic-ref --short HEAD) || error_exit "Could not determine current branch."
+
+echo "🔀 Switching from '$PREV_BRANCH' to '$DEPLOY_BRANCH'..."
+
+git stash push -u -m "$STASH_MSG" || error_exit "Failed to stash changes."
+
+git checkout "$DEPLOY_BRANCH" || error_exit "Failed to checkout '$DEPLOY_BRANCH'."
+
+# Update deploy branch
+echo "⬇️  Pulling latest '$DEPLOY_BRANCH'..."
+if ! git pull --ff-only; then
+  echo "⚠️  Merge required on '$DEPLOY_BRANCH'."
+  echo "Please resolve conflicts in '$DEPLOY_BRANCH' branch and then press Enter to continue..."
+  read -r
+  # Verify no unmerged files
+  if git diff --check; then
+    echo "✔️  Conflicts resolved."
+  else
+    error_exit "Unresolved conflicts remain on '$DEPLOY_BRANCH'."
+  fi
+fi
+
+# Reset index and working tree
+git rm -r --cached . || error_exit "Failed to clear index."
+
+# Restore files from prev branch
+echo "📂 Restoring files from '$PREV_BRANCH'..."
+if ! git checkout "$PREV_BRANCH" -- .; then
+  error_exit "Failed to restore files from '$PREV_BRANCH'."
+fi
+
+# Apply stashed changes
+echo "📦 Applying stashed changes..."
+if ! git stash pop --index; then
+  echo "⚠️  Could not apply stash cleanly. Please resolve conflicts and then continue..."
+  read -rp "Press Enter once manual resolution is done..."
+  # Check again
+  if ! git diff --check; then
+    error_exit "Unresolved conflicts after stash pop."
+  fi
+fi
+
+# Stage everything
+git add -A
+
+echo "📝 Staged changes:"
+git diff --cached --name-status
+
+# Confirm commit and push
+if prompt_continue "❓ Commit and push changes to '$DEPLOY_BRANCH'?"; then
+  echo "✅ Committing..."
+  git commit -m "Deploy: auto-commit on $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nothing to commit."
+  echo "🚀 Pushing to '$DEPLOY_BRANCH'..."
+  git push origin "$DEPLOY_BRANCH" || error_exit "Failed to push to '$DEPLOY_BRANCH'."
+else
+  echo "❌ Aborted by user."
+  cleanup
+  exit 1
+fi
 
 # Build and deploy
-pnpm vite build
-firebase deploy
+echo "🏗️  Building..."
+pnpm vite build || error_exit "Build failed."
 
-# Commit changes
-git commit -m "Deploy: auto-commit on $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nothing to commit"
+echo "☁️  Deploying..."
+firebase deploy || error_exit "Deploy failed."
 
-# Push to deploy branch
-git push origin deploy
+# Switch back
+echo "🔀 Returning to '$PREV_BRANCH'..."
+git checkout "$PREV_BRANCH" || error_exit "Failed to checkout '$PREV_BRANCH'."
 
-# Switch back to previous branch
-git checkout "$prev_branch"
+# Final cleanup (pop any remaining stash)
+cleanup
 
-# Pop the stash
-git stash pop
-
-# Remove error trap after successful execution
-trap - ERR
+echo "🎉 Deployment completed successfully."

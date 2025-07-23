@@ -1,32 +1,71 @@
 "use client"
 
-import { Mail, User, Shield } from "lucide-react"
+import { useState } from "react"
+import { Mail, User, Shield, Pencil } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/store/auth-store"
+import { toast } from "sonner"
+import { Input } from "@/components/ui/input"
+import { useEditUser } from "@/hooks/hooks"
+import { logout } from "@/utils/auth"
+import { useNavigate } from "@tanstack/react-router"
+import { LogOut } from "lucide-react"
 
 export default function UserProfile({ role = "student" } : {role?: "student" | "teacher" | "admin"}) {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
+    const handleLogout = () => {
+      logout();
+      navigate({ to: "/auth" });
+    };
 
   // Fallback data if user is not available
-  let firstName: string | undefined;
-  let lastName: string | undefined;
-
-  if (user?.firstName && user?.lastName) {
-    firstName = user.firstName;
-    lastName = user.lastName;
-  } else {
-    const nameParts = (user?.name || "FirstName LastName").split(" ");
-    firstName = nameParts[0];
-    lastName = nameParts[1];
-  }
-
+  const firstName = user?.name?.split(" ")[0] || ""
+  const lastName = user?.name?.split(" ")[1] || ""
   const displayName = user?.name || `${firstName || ""} ${lastName || ""}`.trim() || (role === "teacher" ? "Teacher" : "Student")
   const displayEmail = user?.email || "No email provided"
   const displayRole = role
   const avatarFallback = (firstName?.[0] || "") + (lastName?.[0] || "") || (displayEmail[0] || "U")
+  
+  const [editField, setEditField] = useState<"firstName" | "lastName" | (null)> (null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [newFirstName, setNewFirstName] = useState(firstName || "")
+  const [newLastName, setNewLastName] = useState(lastName || "")
+
+  const {mutateAsync: editUser } = useEditUser();
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const payload: { firstName: string; lastName: string } = {
+        firstName: newFirstName,
+        lastName: newLastName,
+      }
+
+      await editUser({ body: payload })
+
+      if (user && user.uid) {
+        setUser({
+          ...user,
+          ...payload,
+          name: `${payload.firstName} ${payload.lastName}`,
+          uid: user.uid,
+        })
+      }
+
+      toast.success("Profile updated successfully")
+      setEditField(null)
+    } catch (error) {
+      toast.error("Failed to update profile")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -90,6 +129,18 @@ export default function UserProfile({ role = "student" } : {role?: "student" | "
                       ✓ Active Member
                     </Badge>
                   </div>
+
+                  <div className="text-center pt-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleLogout}
+                      className="relative h-9 px-4 text-sm font-medium transition-all duration-300 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-400/5 hover:text-red-600 dark:hover:text-red-400 hover:shadow-lg hover:shadow-red-500/10"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -107,20 +158,41 @@ export default function UserProfile({ role = "student" } : {role?: "student" | "
             <CardContent className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-4">
-                  <div>
+                  {/* First Name */}
+                  <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-muted-foreground">First Name</label>
-                    <p className="text-base font-medium mt-1">{firstName || "Not provided"}</p>
+                    <Button variant={"ghost"} size={"icon"} onClick={() => setEditField("firstName")}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </div>
+                  {editField === "firstName" ? (
+                    <div className="flex gap-2 items-center">
+                      <Input value={newFirstName} onChange={(e) => setNewFirstName(e.target.value)} />
+                      <Button size={"sm"} onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-base font-medium mt-1">{newFirstName || "Not provided"}</p>
+                  )}
 
-                  <div>
+                  {/* Last Name */}
+                  <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-muted-foreground">Last Name</label>
-                    <p className="text-base font-medium mt-1">{lastName|| "Not provided"}</p>
+                    <Button variant={"ghost"} size={"icon"} onClick={() => setEditField("lastName")}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Display Name</label>
-                    <p className="text-base font-medium mt-1">{user?.name || "Not set"}</p>
-                  </div>
+                  {editField === "lastName" ? (
+                    <div className="flex gap-2 items-center">
+                      <Input value={newLastName} onChange={(e) => setNewLastName(e.target.value)} />
+                      <Button size={"sm"} onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-base font-medium mt-1">{newLastName || "Not provided"}</p>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -194,11 +266,8 @@ export default function UserProfile({ role = "student" } : {role?: "student" | "
                 
                 </div>
             </CardContent>
-            </Card>
-
+          </Card>
         )}
-
-        
       </div>
     </div>
   )

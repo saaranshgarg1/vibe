@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Theme variable mapping */
+/* -------------------- THEME VARIABLE MAPPING -------------------- */
 @theme {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -60,13 +60,14 @@
   --shadow-lg: 0 10px 15px hsl(var(--border) / 0.1);
 }
 
-/* LIGHT MODE THEME */
+/* -------------------- LIGHT MODE -------------------- */
 :root {
-  --background: 48 100% 98%;      /* Very light yellow background */
-  --card: 42 100% 96%;            /* Slightly deeper, warm light yellow for cards/boxes */
-  --card-foreground: 24 8% 12%;      /* Slightly deeper for cards */
+  --background: 48 100% 98%;
+  --foreground: 20 14.3% 4.1%;
+
+  --card: 42 100% 96%;
+  --card-foreground: 24 8% 12%;
   --popover: 48 100% 98%;
- 
   --popover-foreground: 20 14.3% 4.1%;
 
   --primary: 38 95% 58%;
@@ -77,6 +78,7 @@
 
   --muted: 40 12% 96%;
   --muted-foreground: 24 8% 40%;
+
   --accent: 32 90% 52%;
   --accent-foreground: 24 8% 12%;
 
@@ -85,7 +87,6 @@
 
   --border: 38 30% 90%;
   --input: 38 30% 90%;
-
   --ring: 38 95% 58%;
 
   --chart-1: 38 95% 58%;
@@ -106,72 +107,82 @@
   --radius: 0.5rem;
 }
 
-/* DARK MODE - untouched */
+/* -------------------- DARK MODE (AESTHETIC VERSION) -------------------- */
 .dark {
-  --background: 20 14.3% 4.1%;
+  --background: 222 15% 10%;
   --foreground: 60 9.1% 97.8%;
-  --card: 20 14.3% 4.1%;
+
+  --card: 225 12% 14%;
   --card-foreground: 60 9.1% 97.8%;
-  --popover: 20 14.3% 4.1%;
+  --popover: 225 12% 14%;
   --popover-foreground: 60 9.1% 97.8%;
 
-  --primary: 38 95% 60%;
-  --primary-foreground: 20 14.3% 4.1%;
+  --primary: 38 95% 58%;
+  --primary-foreground: 222 15% 10%;
 
-  --secondary: 12 6.5% 15.1%;
+  --secondary: 215 12% 18%;
   --secondary-foreground: 60 9.1% 97.8%;
 
-  --muted: 12 6.5% 15.1%;
-  --muted-foreground: 24 5.4% 63.9%;
-  --accent: 36 90% 45%;
+  --muted: 215 8% 20%;
+  --muted-foreground: 220 12% 65%;
+
+  --accent: 30 90% 55%;
   --accent-foreground: 60 9.1% 97.8%;
 
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 70% 50%;
   --destructive-foreground: 60 9.1% 97.8%;
 
-  --border: 12 6.5% 15.1%;
-  --input: 12 6.5% 15.1%;
-  --ring: 38 95% 60%;
+  --border: 220 8% 20%;
+  --input: 220 8% 20%;
+  --ring: 38 95% 58%;
 
-  --chart-1: 38 95% 60%;
-  --chart-2: 42 92% 50%;
-  --chart-3: 34 88% 45%;
-  --chart-4: 220 50% 60%;
-  --chart-5: 32 85% 50%;
+  --chart-1: 38 95% 58%;
+  --chart-2: 32 90% 52%;
+  --chart-3: 44 85% 60%;
+  --chart-4: 220 45% 60%;
+  --chart-5: 40 65% 45%;
 
-  --sidebar: 20 14.3% 4.1%;
+  --sidebar: 225 15% 12%;
   --sidebar-foreground: 60 9.1% 97.8%;
-  --sidebar-primary: 38 95% 60%;
-  --sidebar-primary-foreground: 20 14.3% 4.1%;
-  --sidebar-accent: 36 90% 15%;
+  --sidebar-primary: 38 95% 58%;
+  --sidebar-primary-foreground: 222 15% 10%;
+  --sidebar-accent: 30 90% 55%;
   --sidebar-accent-foreground: 60 9.1% 97.8%;
-  --sidebar-border: 12 6.5% 15.1%;
-  --sidebar-ring: 38 95% 60%;
+  --sidebar-border: 220 8% 20%;
+  --sidebar-ring: 38 95% 58%;
 }
 
-/* BASE LAYER STYLING */
+/* -------------------- BASE LAYER -------------------- */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-  .card, .popover, .student-course-card {
+
+  .card,
+  .popover,
+  .student-course-card {
     background-color: hsl(var(--card));
     color: hsl(var(--card-foreground));
     border-color: hsl(var(--border));
     box-shadow: 0 2px 8px hsl(var(--border) / 0.08);
+    backdrop-filter: blur(4px); /* Optional: soft blur */
   }
 
-  .btn-primary, .button-primary {
+  .btn-primary,
+  .button-primary {
     background-color: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
     border: none;
     box-shadow: 0 2px 8px hsl(var(--primary) / 0.08);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  .btn-primary:hover, .button-primary:hover {
+  .btn-primary:hover,
+  .button-primary:hover {
     background-color: hsl(var(--accent));
     color: hsl(var(--accent-foreground));
   }
@@ -180,5 +191,17 @@
     background-color: hsl(var(--sidebar));
     color: hsl(var(--sidebar-foreground));
     border-right: 1px solid hsl(var(--sidebar-border));
+  }
+
+  .hover-highlight {
+    transition: background-color 0.2s ease;
+  }
+
+  :root .hover-highlight:hover {
+    background-color: hsl(var(--accent) / 0.05);
+  }
+
+  .dark .hover-highlight:hover {
+    background-color: hsl(var(--accent) / 0.06);
   }
 }

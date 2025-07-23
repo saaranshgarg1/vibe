@@ -32,7 +32,6 @@ import { NotFoundComponent } from '@/components/not-found'
 import { useCourseStore } from '@/store/course-store'
 import CourseEnrollments from '../pages/teacher/course-enrollments'
 import InvitePage from '../pages/teacher/invite'
-import ViewProgress from '../pages/teacher/view-progress'
 
 
 const sampleText = `
@@ -157,16 +156,20 @@ const rootRoute = new RootRoute({
   notFoundComponent: NotFoundComponent,
   errorComponent: ({ error }) => {
     console.error('Router error:', error);
+    // reload page on error
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center p-8 bg-red-50 rounded-lg shadow-lg max-w-md">
-          <h1 className="text-2xl font-bold text-red-800 mb-4">Something went wrong</h1>
+          <h1 className="text-2xl font-bold text-red-800 mb-4">Something went wrong. Please Reload if error Persists.</h1>
           <p className="text-red-600 mb-6">{error instanceof Error ? error.message : 'An unexpected error occurred'}</p>
           <button 
             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             onClick={() => window.location.href = '/auth'}
           >
-            Go to Login
+            Go Back
           </button>
         </div>
       </div>
@@ -295,8 +298,8 @@ const teacherGetCourseRoute = new Route({
 });
 
 const teacherViewCourseRoute = new Route({
-  getParentRoute: () => teacherLayoutRoute,
-  path: '/courses/view',
+  getParentRoute: () => rootRoute,
+  path: '/teacher/courses/view',
   component: TeacherCoursePage, // View a specific course
 });
 // Teacher courses page route
@@ -338,13 +341,6 @@ const teacherAddCourseRoute = new Route({
   getParentRoute: () => teacherLayoutRoute,
   path: '/courses/create',
   component: AddCoursePage,
-});
-
-// Teacher view progress route
-const teacherViewProgressRoute = new Route({
-  getParentRoute: () => teacherLayoutRoute,
-  path: '/courses/progress',
-  component: ViewProgress,
 });
 
 // Student dashboard route
@@ -419,8 +415,7 @@ const routeTree = rootRoute.addChildren([
     teacherCourseEnrollmentsRoute,
     teacherAudioManagerRoute,
     teacherAddCourseRoute,
-    teacherCourseInviteRoute,
-    teacherViewProgressRoute,
+    teacherCourseInviteRoute
   ]),
   studentLayoutRoute.addChildren([
     studentDashboardRoute,

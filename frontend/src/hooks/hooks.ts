@@ -804,7 +804,7 @@ export function useItemById(
   return {
     data: result.data,
     isLoading: result.isLoading,
-    error: result.error?.message ?? "ERROR HERE",
+    error: result.error ? (result.error.message || 'Item update failed') : null,
     refetch: result.refetch,
   };
 }

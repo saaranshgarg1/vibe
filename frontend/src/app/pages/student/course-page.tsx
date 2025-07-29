@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useCourseVersionById, useUserProgress, useItemsBySectionId, useItemById, useProctoringSettings } from "@/hooks/hooks";
+import { useCourseVersionById, useUserProgress, useItemsBySectionId, useItemById, useProctoringSettings, useGetProcotoringSettings, useSubmitFlag } from "@/hooks/hooks";
 import { useAuthStore } from "@/store/auth-store";
 import { useCourseStore } from "@/store/course-store";
 import { Link, Navigate, useRouter } from "@tanstack/react-router";
@@ -32,11 +32,17 @@ import {
   GraduationCap,
   AlertCircle,
   ArrowLeft,
-  CheckCircle
+  CheckCircle,
+  FlagTriangleRight,
+  FlagTriangleRightIcon
 } from "lucide-react";
 import FloatingVideo from "@/components/floating-video";
 import type { itemref } from "@/types/course.types";
 import { logout } from "@/utils/auth";
+import { StudentProctoringSettings } from "@/types/video.types";
+import { FlagModal } from "@/components/FlagModal";
+import { EntityType, ReportEntityEntity } from "@/types/flag.types";
+import { toast } from "sonner";
 // Temporary IDs for development
 // const TEMP_USER_ID = "6831c13a7d17e06882be43ca";
 // const TEMP_COURSE_ID = "6831b9651f79c52d445c5d8b";
@@ -75,29 +81,44 @@ export default function CoursePage() {
   const router = useRouter();
   const COURSE_ID = useCourseStore.getState().currentCourse?.courseId || "";
   const VERSION_ID = useCourseStore.getState().currentCourse?.versionId || "";
+  const { getSettings, settingLoading: proctoringLoading, settingError } = useGetProcotoringSettings();
 
+  const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+  const [isFlagSubmitted,setIsFlagSubmitted] = useState(false);
+  const {mutateAsync:submitFlagAsyncMutate,isPending} = useSubmitFlag();
+
+  const streamRef = useRef<MediaStream | null>(null);
+  
   // Check for microphone and camera access, otherwise redirect to dashboard
-  useEffect(() => {
-    if (!showProctorDialog) {
-      async function checkMediaPermissions() {
-        try {
+    useEffect(() => {
+        async function checkMediaPermissions() {
+          try {
           // Try to get both camera and microphone access
-          await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          streamRef.current = stream;
         } catch (err) {
-          // If access denied or not available, redirect to dashboard
           alert("Please allow camera and microphone access to continue. You will be redirected to the dashboard if access is denied.");
           try {
-            await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const retryStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            streamRef.current = retryStream;
           } catch (err) {
             router.navigate({ to: '/student' });
           }
         }
       }
-      checkMediaPermissions();
-    }
-    // Only run on mount or when dialog is accepted
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showProctorDialog]);
+      if (!showProctorDialog) {
+        checkMediaPermissions();
+      }
+      return () => {
+      // Clean up media tracks on unmount or navigation
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+        window.location.reload();
+      }
+    };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showProctorDialog]);
 
   // Get the setCurrentCourse function from the store
   const { setCurrentCourse } = useCourseStore();
@@ -154,8 +175,7 @@ export default function CoursePage() {
     useUserProgress(COURSE_ID, VERSION_ID);
 
   // Fetch proctoring settings for the course (fetched once when component loads)
-  const { data: proctoringData, isLoading: proctoringLoading } =
-    useProctoringSettings(COURSE_ID, VERSION_ID);
+  const [proctoringData, setProctoringData] = useState<StudentProctoringSettings | null>(null);
 
   const shouldFetchItems = Boolean(activeSectionInfo?.moduleId && activeSectionInfo?.sectionId);
   const sectionModuleId = activeSectionInfo?.moduleId ?? '';
@@ -234,10 +254,13 @@ export default function CoursePage() {
 
   // Log proctoring settings when loaded (only logs once when data is available)
   useEffect(() => {
-    if (proctoringData) {
-      console.log('Proctoring settings loaded:', proctoringData);
+    async function fetch() {
+      const data = await getSettings(COURSE_ID, VERSION_ID);
+      console.log("Current proctoring data: ",data);
+      setProctoringData(data);
     }
-  }, [proctoringData]);
+    fetch();
+  }, []);
 
   // Update section items when data is loaded
   useEffect(() => {
@@ -259,7 +282,7 @@ export default function CoursePage() {
       }));
     }
   }, [currentSectionItems, itemsLoading, activeSectionInfo, shouldFetchItems]);
-  console.log('Section items:', sectionItems);
+  // console.log('Section items:', sectionItems);
 
   // Notification effects
   useEffect(() => {
@@ -309,6 +332,32 @@ export default function CoursePage() {
       }
     }
   }, [itemData, itemLoading]);
+
+
+  // Flag handling function
+  const handleFlagSubmit = async (reason: string) => {
+    try {
+      if(!currentItem){
+        console.warn("Current item not founded",currentItem);
+        return;
+      }
+      const submitFlagBody = {
+        courseId:COURSE_ID,
+        versionId:VERSION_ID,
+        entityId:currentItem._id,
+        entityType:currentItem.type as EntityType,
+        reason,
+      }
+      await submitFlagAsyncMutate({body:submitFlagBody})
+      toast.success("Flag submitted successfully", {position: 'top-right'})
+    } catch(error:any){
+      toast.error(error?.message || "Failed to submit flag", { position: 'top-right' });
+    } finally{
+      setIsFlagSubmitted(true);
+      setIsFlagModalOpen(false);
+    }
+  };
+
 
   // Handle item selection
   // Handle item selection - simplified and more robust
@@ -813,7 +862,7 @@ export default function CoursePage() {
           <DialogHeader>
             <DialogTitle className="text-lg font-extrabold">Declaration</DialogTitle>
           </DialogHeader>
-            <ul className="text-base text-foreground mb-4 list-disc pl-6 space-y-2">
+          <ul className="text-base text-foreground mb-4 list-disc pl-6 space-y-2">
             <li>
               I understand that my camera and microphone will be used for proctoring during this exam.
             </li>
@@ -823,12 +872,13 @@ export default function CoursePage() {
             <li>
               I acknowledge that the microphone is used for monitoring purposes only, and that no audio or video will be recorded or stored elsewhere.
             </li>
-            </ul>
+          </ul>
           <div className="w-full flex justify-end">
-            <Button onClick={() => {setShowProctorDialog(false)}} className="w-full">ACCEPT</Button>
+            <Button onClick={() => { setShowProctorDialog(false) }} className="w-full">ACCEPT</Button>
           </div>
         </DialogContent>
       </Dialog>
+      
       <SidebarProvider defaultOpen={true}>
         <div className="flex h-screen w-full">
           {/* Enhanced Course Navigation Sidebar */}
@@ -1157,13 +1207,13 @@ export default function CoursePage() {
                 {/* Quiz Passed/Failed */}
                 {quizPassed !== 2 && (
                   <Card className={`border shadow-lg backdrop-blur-md animate-in slide-in-from-right-3 duration-300 ${quizPassed === 1
-                      ? "border-green-400/40 bg-green-500/95 text-green-50"
-                      : "border-red-400/40 bg-red-500/95 text-red-50"
+                    ? "border-green-400/40 bg-green-500/95 text-green-50"
+                    : "border-red-400/40 bg-red-500/95 text-red-50"
                     }`}>
                     <CardContent className="flex items-center gap-3 px-4 py-0">
                       <div className={`flex h-22 w-22 items-center justify-center rounded-l ${quizPassed === 1
-                          ? "border-green-50/30 bg-green-50/10"
-                          : "border-red-50/30 bg-red-50/10"
+                        ? "border-green-50/30 bg-green-50/10"
+                        : "border-red-50/30 bg-red-50/10"
                         } text-4xl p-4`}>
                         {quizPassed === 1 ? (
                           <CheckCircle className="h-16 w-16" />
@@ -1178,8 +1228,8 @@ export default function CoursePage() {
                       </div>
                       <div className="flex-1 space-y-1">
                         <Badge variant="outline" className={`text-lg font-bold ${quizPassed === 1
-                            ? "border-green-50/30 bg-green-50/10 text-green-50"
-                            : "border-red-50/30 bg-red-50/10 text-red-50"
+                          ? "border-green-50/30 bg-green-50/10 text-green-50"
+                          : "border-red-50/30 bg-red-50/10 text-red-50"
                           }`}>
                           {quizPassed === 1 ? "Quiz Passed" : "Quiz Failed"}
                         </Badge>
@@ -1194,8 +1244,8 @@ export default function CoursePage() {
                         size="sm"
                         onClick={() => setQuizPassed(2)}
                         className={`h-6 w-6 p-0 ${quizPassed === 1
-                            ? "text-green-50 hover:bg-green-50/10"
-                            : "text-red-50 hover:bg-red-50/10"
+                          ? "text-green-50 hover:bg-green-50/10"
+                          : "text-red-50 hover:bg-red-50/10"
                           }`}
                       >
                         ×
@@ -1204,9 +1254,29 @@ export default function CoursePage() {
                   </Card>
                 )}
               </div>
-
+                <FlagModal
+                  open={isFlagModalOpen}
+                  onOpenChange={setIsFlagModalOpen}
+                  onSubmit={handleFlagSubmit}
+                  isSubmitting={isPending}
+                />
               {currentItem ? (
-                <div className="relative z-10 h-full">
+                <div className="relative z-10 h-full flex flex-col mb-2  sm:mb-1">
+                {!isFlagSubmitted &&
+                  <div className="flex justify-end mb-1 me-10">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs gap-1"
+                      title="Flag this content"
+                      onClick={()=>setIsFlagModalOpen(true)}
+                    >
+                      <FlagTriangleRightIcon className="h-4 w-4" />
+                      <span className="max-sm:hidden">Submit Flag</span>
+                    </Button>
+                    </div>
+                   }
+                 <div className="flex-1">
                   <ItemContainer
                     ref={itemContainerRef}
                     item={currentItem}
@@ -1221,7 +1291,10 @@ export default function CoursePage() {
                     displayNextLesson={false}
                     setQuizPassed={setQuizPassed}
                     anomalies={anomalies}
+                    keyboardLockEnabled={!isFlagModalOpen}
                   />
+                  </div>
+
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center relative z-10">

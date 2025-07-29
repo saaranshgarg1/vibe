@@ -7,13 +7,18 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { logout } from "@/utils/auth"
 import { useNavigate } from "@tanstack/react-router"
-import { LogOut, ArrowLeft } from "lucide-react"
+import { LogOut, ArrowLeft, UserRoundCheck } from "lucide-react"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { useState } from "react"
+import InviteDropdown from "@/components/inviteDropDown"
+import ConfirmationModal from "@/app/pages/teacher/components/confirmation-modal"
 // import FloatingVideo from "@/components/floating-video";
 
 export default function StudentLayout() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const [showInvites, setShowInvites] = useState(false);
+  const [confirmLogout,setConfirmLogout] = useState(false);
 
   const handleLogout = () => {
     logout()
@@ -29,7 +34,12 @@ export default function StudentLayout() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 bg-gray-50/50 dark:bg-orange-950/70">
       {/* <FloatingVideo isVisible={user?.role === 'student'}></FloatingVideo> */}
-
+      <ConfirmationModal isOpen={confirmLogout} 
+          onClose={()=>setConfirmLogout(false)} 
+          onConfirm={handleLogout} 
+          title={`Confirm Logout`}
+          description="Are you sure you want to log out? You will need to sign in again to access your dashboard."
+          />
       {/* Ambient background effect */}
       <div className="fixed inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-secondary/[0.02] pointer-events-none" />
 
@@ -96,10 +106,24 @@ export default function StudentLayout() {
               </Link>
             </Button>
 
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInvites((prev) => !prev)}
+                className="relative h-9 px-3 text-sm font-medium transition-all duration-300 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-400/5 hover:text-red-600 dark:hover:text-red-400 hover:shadow-lg hover:shadow-red-500/10"
+              >
+                <UserRoundCheck className="h-4 w-4" />
+                <span className="hidden sm:block ml-2">Invites</span>
+              </Button>
+
+              {showInvites && <InviteDropdown />}
+            </div>
+
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleLogout}
+              onClick={()=>setConfirmLogout(true)}
               className="relative h-10 px-3 text-sm font-medium transition-all duration-300 hover:bg-gradient-to-r hover:from-red-500/10 hover:to-red-400/5 hover:text-red-600 dark:hover:text-red-400 hover:shadow-lg hover:shadow-red-500/10 before:absolute before:inset-0 before:rounded-md before:bg-gradient-to-r before:from-red-500/5 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300"
             >
               <LogOut className="h-4 w-4" />

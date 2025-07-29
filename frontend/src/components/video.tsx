@@ -30,7 +30,7 @@ function parseTimeToSeconds(timeStr: string): number {
   }
 }
 
-export default function Video({ URL, startTime, endTime, points, anomalies, rewindVid, pauseVid, doGesture = false, onNext, isProgressUpdating, onDurationChange }: VideoProps) {
+export default function Video({ URL, startTime, endTime, points, anomalies, rewindVid, pauseVid, doGesture = false, onNext, isProgressUpdating, onDurationChange,keyboardLockEnabled= true }: VideoProps) {
   const playerRef = useRef<YTPlayerInstance | null>(null);
   const iframeRef = useRef<HTMLDivElement>(null);
   const [playerReady, setPlayerReady] = useState(false);
@@ -71,7 +71,6 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
 
   // Control handlers
   const handlePlayPause = useCallback(() => {
-
     const player = playerRef.current;
     if (!player || typeof player.pauseVideo !== 'function') return;
     if (playing) {
@@ -140,6 +139,7 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
       if (playing) {
         player.pauseVideo();
         console.log('Video paused due to anomaly detection');
+         wasPlayingBeforeRewind.current = true; // Remember it was playing
       }
     } else {
       // Resume video when anomalies are cleared
@@ -271,6 +271,8 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
 
   // Handle keyboard events including space for play/pause
   useEffect(() => {
+    
+    if(!keyboardLockEnabled) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       // Handle space key for play/pause
       if (e.code === 'Space') {
@@ -496,7 +498,7 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
           />
 
           {/* Anomaly Overlay */}
-          {(rewindVid || doGesture) && (
+          {(rewindVid || doGesture || pauseVid) && (
             <div
               className='shadow-2xl'
               style={{
@@ -545,7 +547,7 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
                   }}
                 >
                   {/* Warning SVG icon */}
-                  {rewindVid && (<svg
+                  {(rewindVid || pauseVid) && (<svg
                     width="140"
                     height="140"
                     viewBox="0 0 156.262 144.407"
@@ -583,7 +585,7 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
                       </g>
                     </g>
                   </svg>)}
-                  {doGesture && !rewindVid && (<img src="https://em-content.zobj.net/source/microsoft/309/thumbs-up_1f44d.png" className="w-auto h-full" />)}
+                  {doGesture && !rewindVid && !pauseVid && (<img src="https://em-content.zobj.net/source/microsoft/309/thumbs-up_1f44d.png" className="w-auto h-full" />)}
                 </div>
                 <div
                   style={{
@@ -602,7 +604,7 @@ export default function Video({ URL, startTime, endTime, points, anomalies, rewi
 
                   }}
                 >
-                  {rewindVid
+                  {rewindVid || pauseVid
                     ? (
                       <span style={{ fontWeight: 500, fontSize: 15 }}>
                         {anomalies.includes("voiceDetection") ? (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -19,13 +19,18 @@ import {
   Trash2,
   Loader2,
   Users,
+  Sparkles,
+  GraduationCap,
+  Clock,
+  BarChart3,
+  RotateCcw,
+  FlagTriangleRight,
 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { ProctoringModal } from "@/components/EditProctoringModal"
-// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-// import { Checkbox } from "@/components/ui/checkbox"
 import { Pagination } from "@/components/ui/Pagination"
+import { Badge } from "@/components/ui/badge"
 
 // Import the hooks and auth store
 import {
@@ -40,6 +45,7 @@ import {
 } from "@/hooks/hooks"
 import { useAuthStore } from "@/store/auth-store"
 import { useCourseStore } from "@/store/course-store"
+import { useFlagStore } from "@/store/flag-store"
 import { bufferToHex } from "@/utils/helpers"
 
 // Define types for better TypeScript support
@@ -51,7 +57,7 @@ export default function TeacherCoursesPage() {
   const queryClient = useQueryClient()
 
   // Fetch user enrollments with pagination (use reasonable page size)
-  const {token} = useAuthStore()
+  const { token } = useAuthStore()
   const {
     data: enrollmentsResponse,
     isLoading: enrollmentsLoading,
@@ -62,10 +68,11 @@ export default function TeacherCoursesPage() {
   const enrollments = enrollmentsResponse?.enrollments || []
   const totalPages = enrollmentsResponse?.totalPages || 1
   const totalDocuments = enrollmentsResponse?.totalDocuments || 0
+  const filteredEnrollements = enrollments.filter((enrollment)=>enrollment.role !== "STUDENT");
 
   // Get unique courses (in case user is enrolled in multiple versions of same course)
   // Since we're using pagination, we'll work with the current page data
-  const uniqueCourses = enrollments.reduce((acc: any[], enrollment: any) => {
+  const uniqueCourses = filteredEnrollements.reduce((acc: any[], enrollment: any) => {
     const courseIdHex = bufferToHex(enrollment.courseId)
     const existingCourse = acc.find((e) => bufferToHex(e.courseId) === courseIdHex)
     if (!existingCourse) {
@@ -96,8 +103,8 @@ export default function TeacherCoursesPage() {
   // Invalidate all related queries
   const invalidateAllQueries = () => {
     // Invalidate enrollments
-    queryClient.invalidateQueries({ 
-      queryKey: ['get', '/users/enrollments'] 
+    queryClient.invalidateQueries({
+      queryKey: ['get', '/users/enrollments']
     })
 
     // Invalidate all course queries
@@ -117,8 +124,11 @@ export default function TeacherCoursesPage() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">Loading courses...</span>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl animate-pulse"></div>
+              <Loader2 className="h-8 w-8 animate-spin text-primary relative z-10" />
+            </div>
+            <span className="ml-3 text-muted-foreground font-medium">Loading your courses...</span>
           </div>
         </div>
       </div>
@@ -131,9 +141,18 @@ export default function TeacherCoursesPage() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">
+            <div className="relative inline-block mb-4">
+              <div className="absolute inset-0 bg-gradient-to-r from-destructive/20 to-red-500/20 rounded-full blur-xl"></div>
+              <div className="relative bg-destructive/10 border border-destructive/20 rounded-full p-4">
+                <BookOpen className="h-8 w-8 text-destructive" />
+              </div>
+            </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">Failed to load courses</h3>
-            <p className="text-muted-foreground mb-4">{enrollmentsError}</p>
-            <Button onClick={() => refetch()}>Try Again</Button>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{enrollmentsError}</p>
+            <Button onClick={() => refetch()} className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
           </div>
         </div>
       </div>
@@ -145,14 +164,26 @@ export default function TeacherCoursesPage() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">
-            <div className="mb-4">
-              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl animate-pulse"></div>
+              <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-full p-6">
+                <BookOpen className="h-12 w-12 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No courses found</h3>
-            <p className="text-muted-foreground mb-4">Create your first course to get started</p>
-            <Button onClick={createNewCourse}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Course
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-3">No courses found</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">Create your first course to start building amazing learning experiences</p>
+            <Button 
+              onClick={createNewCourse} 
+              className="relative overflow-hidden bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] hover:bg-[length:100%_auto] shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 px-8 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              <div className="relative flex items-center gap-2">
+                <div className="relative">
+                  <Plus className="h-4 w-4 mr-1 transition-transform duration-300 group-hover:rotate-90" />
+                  <div className="absolute inset-0 bg-white/30 rounded-full blur-sm animate-ping opacity-75"></div>
+                </div>
+                <span className="font-semibold">Create New Course</span>
+              </div>
             </Button>
           </div>
         </div>
@@ -161,53 +192,106 @@ export default function TeacherCoursesPage() {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header Section */}
+    <div className="flex-1 overflow-auto p-6 bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header Section with Beautiful Design */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl blur-3xl"></div>
+                        <div className="relative bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl p-8">
         <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-lg blur-sm"></div>
+                    <div className="relative bg-gradient-to-r from-primary to-accent p-2 rounded-lg">
+                      <GraduationCap className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                  </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">My Courses</h1>
-            <p className="text-muted-foreground mt-1">Manage your courses and versions</p>
+                    <h1 className="text-4xl font-bold text-foreground">
+                      My Courses
+                    </h1>
+                    <div className="mt-1 flex items-center" style={{ minHeight: '1.5rem' }}>
+                      <span className="inline-flex items-center justify-center" style={{ width: '1.5rem' }}>
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      </span>
+                      <span className="text-muted-foreground">Manage your courses and versions with ease</span>
           </div>
-          <Button onClick={createNewCourse} className="h-10">
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Course
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={createNewCourse} 
+                className="relative overflow-hidden bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] hover:bg-[length:100%_auto] shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 h-12 px-8 group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                <div className="relative flex items-center gap-2">
+                  <div className="relative">
+                    <Plus className="h-4 w-4 mr-1 transition-transform duration-300 group-hover:rotate-90" />
+                    <div className="absolute inset-0 bg-white/30 rounded-full blur-sm animate-ping opacity-75"></div>
+                  </div>
+                  <span className="font-semibold">Create New Course</span>
+                </div>
           </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Search Section */}
+        {/* Search Section with Enhanced Design */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl blur-sm"></div>
+          <div className="relative bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg blur-sm"></div>
+                <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search courses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+                                         className="pl-10 bg-background border-border focus:border-primary focus:ring-primary/20 transition-all duration-300"
             />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BarChart3 className="h-4 w-4" />
+                <span>{filteredCourses.length} courses</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Courses List */}
-        <div className="space-y-4">
-          {filteredCourses.map((enrollment: any) => (
-            <CourseCard
+        {/* Courses List with Beautiful Cards */}
+        <div className="space-y-6">
+          {filteredCourses.map((enrollment: any, index: number) => (
+            <div
               key={enrollment._id}
+              className="animate-in slide-in-from-bottom-4 duration-500"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <CourseCard
               enrollment={enrollment}
               searchQuery={searchQuery}
               onInvalidate={invalidateAllQueries}
             />
+            </div>
           ))}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination with Enhanced Design */}
         {totalPages > 1 && (
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-muted/10 to-muted/5 rounded-xl blur-sm"></div>
+            <div className="relative bg-card/90 backdrop-blur-sm border border-border/50 rounded-xl p-4">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             totalDocuments={totalDocuments}
             onPageChange={handlePageChange}
           />
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -231,13 +315,11 @@ function CourseCard({
     name: "",
     description: "",
   })
-  const [showProctoringModal, setShowProctoringModal] = useState(false)
-  const { editSettings, loading, error } = useEditProctoringSettings()
-  
+
   const queryClient = useQueryClient()
 
   // Convert buffers to hex strings for API compatibility
-  const courseIdHex = bufferToHex(enrollment.courseId)
+  const courseIdHex = bufferToHex(enrollment.courseId as any)
 
   // API Hooks
   const updateCourseMutation = useUpdateCourse()
@@ -247,7 +329,6 @@ function CourseCard({
 
   // Fetch full course data
   const { data: course, isLoading: courseLoading, error: courseError } = useCourseById(courseIdHex)
-  const settingsExist =!!(course as any)?.settings?.proctoring?.length;
   // Filter based on search query
   const matchesSearch =
     !searchQuery ||
@@ -260,26 +341,44 @@ function CourseCard({
 
   if (courseLoading) {
     return (
-      <Card>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl blur-sm"></div>
+                 <Card className="relative bg-card/95 backdrop-blur-sm border border-border/50 overflow-hidden">
         <CardContent className="p-6">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="text-muted-foreground">Loading course...</span>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-sm animate-pulse"></div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary relative z-10" />
+              </div>
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-muted/50 rounded animate-pulse"></div>
+                <div className="h-3 bg-muted/30 rounded w-2/3 animate-pulse"></div>
+              </div>
           </div>
         </CardContent>
       </Card>
+      </div>
     )
   }
 
   if (courseError || !course) {
     return (
-      <Card>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 to-red-500/5 rounded-xl blur-sm"></div>
+                 <Card className="relative bg-card/95 backdrop-blur-sm border border-destructive/20 overflow-hidden">
         <CardContent className="p-6">
           <div className="text-center text-destructive">
-            <p>Error loading course data</p>
+              <div className="relative inline-block mb-2">
+                <div className="absolute inset-0 bg-gradient-to-r from-destructive/20 to-red-500/20 rounded-full blur-sm"></div>
+                <div className="relative bg-destructive/10 border border-destructive/20 rounded-full p-2">
+                  <BookOpen className="h-5 w-5 text-destructive" />
+                </div>
+              </div>
+              <p className="font-medium">Error loading course data</p>
           </div>
         </CardContent>
       </Card>
+      </div>
     )
   }
 
@@ -379,37 +478,51 @@ function CourseCard({
   }
 
   return (
+    <div className="relative group">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
     <Card
-      className={`transition-all duration-300 hover:shadow-lg ${
-        expandedCourse ? "ring-2 ring-primary/20 shadow-lg" : ""
-      }`}
+                 className={`relative bg-card/95 backdrop-blur-sm border border-border/50 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 ${
+          expandedCourse ? "ring-2 ring-primary/30 shadow-xl shadow-primary/10" : ""
+        }`}
     >
       {/* Course Header - Always Visible */}
       <CardHeader
-        className="cursor-pointer hover:bg-accent/30 transition-colors duration-200"
+          className="cursor-pointer hover:bg-accent/20 transition-all duration-300 relative overflow-hidden"
         onClick={() => !editingCourse && toggleCourse()}
       >
-        <div className="flex items-center justify-between">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div
-              className={`transition-transform duration-200 ${expandedCourse ? "rotate-90" : ""}`}
+                className={`transition-all duration-300 ${expandedCourse ? "rotate-90" : ""}`}
               onClick={(e) => {
                 e.stopPropagation()
                 toggleCourse()
               }}
             >
-              <ChevronRight className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-sm"></div>
+                  <div className="relative bg-gradient-to-r from-primary to-accent p-1.5 rounded-full">
+                    <ChevronRight className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                </div>
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <CardTitle className="text-xl font-bold text-foreground truncate">{course.name}</CardTitle>
+                                     <CardTitle className="text-xl font-bold text-foreground truncate">
+                     {course.name}
+                   </CardTitle>
+                  <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">
+                    <FileText className="h-3 w-3 mr-1" />
+                    {course.versions?.length || 0} versions
+                  </Badge>
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span>{course.versions?.length || 0} versions</span>
+                    <Clock className="h-4 w-4" />
+                    <span>Last updated recently</span>
                 </div>
               </div>
             </div>
@@ -424,7 +537,7 @@ function CourseCard({
                 if (!expandedCourse) toggleCourse()
                 startEditing()
               }}
-              className="h-8 cursor-pointer"
+                                 className="h-9 bg-background border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300"
               disabled={updateCourseMutation.isPending}
             >
               {updateCourseMutation.isPending ? (
@@ -443,7 +556,7 @@ function CourseCard({
                 if (!expandedCourse) toggleCourse()
                 deleteCourse()
               }}
-              className="h-8 text-destructive hover:text-destructive cursor-pointer"
+                                 className="h-9 bg-background border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-300"
               disabled={deleteCourseMutation.isPending}
             >
               {deleteCourseMutation.isPending ? (
@@ -453,20 +566,6 @@ function CourseCard({
               )}
               Delete
             </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!expandedCourse) toggleCourse()
-                setShowProctoringModal(true)
-              }}
-              className="h-8"
-            >
-            <FileText className="h-3 w-3 mr-1" />
-              Settings
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -474,11 +573,14 @@ function CourseCard({
       {/* Expanded Content */}
       {expandedCourse && (
         <CardContent className="pt-0 space-y-6">
-          <Separator />
+            <Separator className="bg-border/50" />
 
           {/* Course Description Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">Course Description</h3>
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <div className="w-1 h-5 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                Course Description
+              </h3>
             {editingCourse ? (
               <div className="space-y-4">
                 <div>
@@ -491,7 +593,7 @@ function CourseCard({
                         name: e.target.value,
                       }))
                     }
-                    className="border-primary/30 focus:border-primary"
+                                                   className="border-primary/30 focus:border-primary bg-background"
                     placeholder="Course name"
                   />
                 </div>
@@ -505,7 +607,7 @@ function CourseCard({
                         description: e.target.value,
                       }))
                     }
-                    className="min-h-[120px] border-primary/30 focus:border-primary resize-none"
+                                             className="min-h-[120px] border-primary/30 focus:border-primary bg-background resize-none"
                     placeholder="Course description"
                   />
                 </div>
@@ -514,7 +616,7 @@ function CourseCard({
                     onClick={saveEditing}
                     size="sm"
                     disabled={updateCourseMutation.isPending}
-                    className="cursor-pointer"
+                      className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300"
                   >
                     {updateCourseMutation.isPending ? (
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -523,15 +625,18 @@ function CourseCard({
                     )}
                     Save Changes
                   </Button>
-                  <Button onClick={cancelEditing} variant="outline" size="sm" className="cursor-pointer">
+                                         <Button onClick={cancelEditing} variant="outline" size="sm" className="border-border bg-background">
                     <X className="h-3 w-3 mr-1" />
                     Cancel
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="bg-accent/20 rounded-lg p-4 border border-accent/30">
+                                 <div className="relative">
+                   <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 rounded-lg blur-sm"></div>
+                   <div className="relative bg-accent/10 rounded-lg p-4 border border-accent/30">
                 <p className="text-muted-foreground leading-relaxed">{course.description}</p>
+                  </div>
               </div>
             )}
           </div>
@@ -539,14 +644,17 @@ function CourseCard({
           {/* All Versions Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">All Versions ({course.versions?.length || 0})</h3>
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <div className="w-1 h-5 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                  All Versions ({course.versions?.length || 0})
+                </h3>
               <div className="flex items-center gap-2">
                 <Button
                   onClick={showVersionForm}
                   size="sm"
                   variant="outline"
                   disabled={createVersionMutation.isPending}
-                  className="cursor-pointer"
+                    className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 hover:from-primary/20 hover:to-accent/20 transition-all duration-300"
                 >
                   {createVersionMutation.isPending ? (
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -560,7 +668,9 @@ function CourseCard({
 
             {/* New Version Form */}
             {showNewVersionForm && (
-              <Card className="bg-accent/10 border-2 border-primary/30">
+                                 <div className="relative">
+                   <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-xl blur-sm"></div>
+                   <Card className="relative bg-card/95 backdrop-blur-sm border-2 border-primary/30">
                 <CardContent className="p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-foreground">Create New Version</h4>
@@ -573,7 +683,7 @@ function CourseCard({
                         value={newVersionData.version}
                         onChange={(e) => setNewVersionData((prev) => ({ ...prev, version: e.target.value }))}
                         placeholder="e.g., v2.0, Version 2, etc."
-                        className="border-primary/30 focus:border-primary"
+                            className="border-primary/30 focus:border-primary bg-background"
                       />
                     </div>
 
@@ -583,7 +693,7 @@ function CourseCard({
                         value={newVersionData.description}
                         onChange={(e) => setNewVersionData((prev) => ({ ...prev, description: e.target.value }))}
                         placeholder="Describe what's new in this version..."
-                        className="min-h-[80px] border-primary/30 focus:border-primary resize-none"
+                                                         className="min-h-[80px] border-primary/30 focus:border-primary bg-background resize-none"
                       />
                     </div>
 
@@ -592,7 +702,7 @@ function CourseCard({
                         onClick={saveNewVersion}
                         size="sm"
                         disabled={createVersionMutation.isPending}
-                        className="cursor-pointer"
+                            className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all duration-300"
                       >
                         {createVersionMutation.isPending ? (
                           <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -601,7 +711,7 @@ function CourseCard({
                         )}
                         Save Version
                       </Button>
-                      <Button onClick={cancelNewVersion} variant="outline" size="sm" className="cursor-pointer">
+                                                     <Button onClick={cancelNewVersion} variant="outline" size="sm" className="border-border bg-background">
                         <X className="h-3 w-3 mr-1" />
                         Cancel
                       </Button>
@@ -609,46 +719,49 @@ function CourseCard({
                   </div>
                 </CardContent>
               </Card>
+                </div>
             )}
 
             {/* Display All Versions */}
             <div className="space-y-3">
               {course.versions && course.versions.length > 0 ? (
-                course.versions.map((versionId: string) => (
-                  <VersionCard
+                  course.versions.map((versionId: string, index: number) => (
+                    <div
                     key={versionId}
+                      className="animate-in slide-in-from-left-4 duration-500"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <VersionCard
                     versionId={versionId}
                     courseId={courseIdHex}
                     onInvalidate={onInvalidate}
                     deleteVersionMutation={deleteVersionMutation}
                   />
+                    </div>
                 ))
               ) : (
-                <Card className="bg-muted/20 border-dashed border-2">
+                                       <div className="relative">
+                       <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-muted/10 rounded-xl blur-sm"></div>
+                       <Card className="relative bg-card/95 backdrop-blur-sm border-dashed border-2 border-muted-foreground/30">
                   <CardContent className="p-6 text-center">
-                    <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">No versions available</p>
+                        <div className="relative inline-block mb-3">
+                          <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-muted/10 rounded-full blur-sm"></div>
+                          <div className="relative bg-muted/20 border border-muted-foreground/20 rounded-full p-3">
+                            <FileText className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground font-medium">No versions available</p>
                     <p className="text-sm text-muted-foreground mt-1">Create your first version to get started</p>
                   </CardContent>
                 </Card>
+                  </div>
               )}
             </div>
           </div>
-
-          
-          <ProctoringModal
-            open={showProctoringModal}
-            onClose={() => setShowProctoringModal(false)}
-            courseId={courseIdHex}
-            courseVersionId={course.versions[0]}
-            isNew={!settingsExist}
-          />
-
-
-
         </CardContent>
       )}
     </Card>
+    </div>
   )
 }
 
@@ -667,6 +780,8 @@ function VersionCard({
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { setCurrentCourse } = useCourseStore()
+  const [showProctoringModal, setShowProctoringModal] = useState(false)
+  const { setCurrentCourseFlag } = useFlagStore()
 
   // Fetch individual version data
   const { data: version, isLoading: versionLoading, error: versionError } = useCourseVersionById(versionId)
@@ -711,6 +826,21 @@ function VersionCard({
       to: "/teacher/courses/enrollments",
     })
   }
+
+   const viewFlags = () => {
+    // Set course info in store and navigate to enrollments page
+    setCurrentCourseFlag({
+      courseId: courseId,
+      versionId: versionId,
+      moduleId: null,
+      sectionId: null,
+      itemId: null,
+      watchItemId: null,
+    })
+    navigate({
+      to: "/teacher/courses/flags/list",
+    })
+  }
   const sendInvites = () => {
     // Set course info in store and navigate to invite page
     setCurrentCourse({
@@ -743,14 +873,20 @@ function VersionCard({
 
   if (versionLoading) {
     return (
-      <Card className="bg-card/50 border-l-4 border-l-muted">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-muted/10 to-muted/5 rounded-xl blur-sm"></div>
+        <Card className="relative bg-card/95 backdrop-blur-sm border-l-4 border-l-muted">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-muted/20 to-muted/10 rounded-full blur-sm animate-pulse"></div>
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground relative z-10" />
+              </div>
             <span className="text-sm text-muted-foreground">Loading version...</span>
           </div>
         </CardContent>
       </Card>
+      </div>
     )
   }
 
@@ -760,26 +896,50 @@ function VersionCard({
   }
 
   return (
-    <Card className="bg-card/50 border-l-4 border-l-primary/40 hover:shadow-md transition-all duration-200">
+    <div className="relative group">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+             <Card className="relative bg-card/95 backdrop-blur-sm border-l-4 border-l-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-3">
-              <h4 className="font-semibold text-foreground">{version.version}</h4>
+                <h4 className="font-semibold text-foreground">{version.name}</h4>
+                <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary text-xs">
+                  Version
+                </Badge>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">{version.description}</p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" onClick={viewEnrollments} className="h-7 text-xs cursor-pointer">
+                             <Button variant="outline" size="sm" onClick={viewFlags} className="h-7 text-xs cursor-pointer">
+              <FlagTriangleRight className="h-3 w-3 mr-1" />
+              View Flags
+            </Button>
+            <Button 
+                 variant="outline" 
+                 size="sm" 
+                 onClick={viewEnrollments} 
+                 className="h-8 bg-background border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300 text-xs"
+               >
               <Users className="h-3 w-3 mr-1" />
               View Enrollments
             </Button>
-            <Button variant="outline" size="sm" onClick={sendInvites} className="h-7 text-xs cursor-pointer">
+                             <Button 
+                 variant="outline" 
+                 size="sm" 
+                 onClick={sendInvites} 
+                 className="h-8 bg-background border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300 text-xs"
+               >
               <Users className="h-3 w-3 mr-1" />
               Send Invites
             </Button>
-            <Button variant="outline" size="sm" onClick={viewCourse} className="h-7 text-xs cursor-pointer">
+                             <Button 
+                 variant="outline" 
+                 size="sm" 
+                 onClick={viewCourse} 
+                 className="h-8 bg-background border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300 text-xs"
+               >
               <Eye className="h-3 w-3 mr-1" />
               View
             </Button>
@@ -787,7 +947,7 @@ function VersionCard({
               variant="outline"
               size="sm"
               onClick={deleteVersion}
-              className="h-7 text-xs text-destructive hover:text-destructive cursor-pointer"
+                                 className="h-8 bg-background border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-300 text-xs"
               disabled={deleteVersionMutation.isPending}
             >
               {deleteVersionMutation.isPending ? (
@@ -797,9 +957,31 @@ function VersionCard({
               )}
               Delete
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowProctoringModal(true)
+              }}
+                                 className="h-8 bg-background border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Settings
+            </Button>
           </div>
         </div>
+
+        <ProctoringModal
+          open={showProctoringModal}
+          onClose={() => setShowProctoringModal(false)}
+          courseId={courseId}
+          courseVersionId={versionId}
+          isNew={false}
+        />
+
       </CardContent>
     </Card>
+    </div>
   )
 }

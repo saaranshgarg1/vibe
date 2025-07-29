@@ -9,8 +9,10 @@ import TeacherProfile from "@/app/pages/teacher/profile";
 import TeacherCoursePage from "@/app/pages/teacher/teacher-course-page";
 import { LiveQuiz } from "@/app/pages/teacher/live-quiz" // Uncomment if you want to use AudioManager
 import CourseEnrollments from "../pages/teacher/course-enrollments";
+import FlaggedList from "../pages/teacher/FlaggedList";
 import AddCoursePage from "@/app/pages/teacher/AddCoursePage";
 import InvitePage from "../pages/teacher/invite";
+import AISectionPage from "@/app/pages/teacher/AISectionPage";
 
 const teacherRoutes: RouteObject = {
   path: "/teacher",
@@ -45,6 +47,10 @@ const teacherRoutes: RouteObject = {
       path: "courses/enrollments",
       element: <CourseEnrollments />,
     },
+     {
+      path: "courses/flags",
+      element: <FlaggedList />,
+    },
     {
       index: true,
       element: <Dashboard />, // Default to Dashboard
@@ -66,8 +72,12 @@ const teacherRoutes: RouteObject = {
       element: <LiveQuiz />, // Uncomment if you want to use AudioManager
     },
     {
-      path:"courses/create",
-      element:<AddCoursePage /> 
+      path: "courses/create",
+      element: <AddCoursePage />,
+    },
+    {
+      path: "ai-section",
+      element: <AISectionPage />, // Page for generating sections using AI
     }
   ],
 };

@@ -10,8 +10,10 @@ export interface VideoProps {
   rewindVid: boolean;
   pauseVid: boolean;
   onDurationChange?: (duration: number) => void;
-
+  keyboardLockEnabled?:boolean;
 }
+
+
 
 // Minimal YouTube Player instance interface
 export interface YTPlayerInstance {
@@ -59,7 +61,7 @@ export interface IDetectorSettings {
 
 export interface StudentProctoringSettings {
   _id: string;
-  studentId: string;
+  studentId?: string;
   versionId: string;
   courseId: string;
   settings: {
@@ -98,4 +100,17 @@ export interface ProctoringSettings {
       }[]
     }
 }
+}
+
+export interface Video{
+  _id: string;
+  name: string;
+  description: string;
+  type: string;
+  details: {
+    URL: string;
+    startTime: string;
+    endTime: string;
+    points: number;
+  };
 }
